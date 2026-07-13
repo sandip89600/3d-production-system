@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { analyticsAPI, projectsAPI } from '../../api';
+import api from '../../api/client';
 import Layout from '../../components/Layout';
 import StatsCard from '../../components/StatsCard';
 import { StatusBadge, ProgressBar } from '../../components/Badges';
@@ -13,6 +14,10 @@ export default function UserDashboard() {
   const [briefForm, setBriefForm] = useState({ name: '', type: '3D architecture', description: '', priority: 'medium', deadline: '' });
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Payment simulator states
+  const [payForm, setPayForm] = useState({ projectName: '', amount: '' });
+  const [paying, setPaying] = useState(false);
 
   // 1. Fetch Client Dashboard Stats & Activity
   const { data, isLoading } = useQuery({
@@ -73,6 +78,32 @@ export default function UserDashboard() {
     }
   };
 
+  // Payment simulator trigger
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    if (!payForm.projectName || !payForm.amount) {
+      toast.error('Please choose a project and enter an amount.');
+      return;
+    }
+
+    setPaying(true);
+    try {
+      const res = await api.post('/payments/simulate', {
+        projectName: payForm.projectName,
+        amount: parseFloat(payForm.amount)
+      });
+      if (res.data?.success) {
+        toast.success(`Payment simulated successfully! Txn ID: ${res.data.transactionId}`);
+        setPayForm({ projectName: '', amount: '' });
+        queryClient.invalidateQueries({ queryKey: ['client-dashboard'] });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Payment simulation failed.');
+    } finally {
+      setPaying(false);
+    }
+  };
+
   // 4. Download Deliverable Handler (triggers secure signed URL generation)
   const handleDownload = async (projectId, fileName) => {
     const downloadToast = toast.loading('Generating secure download link...');
@@ -119,7 +150,7 @@ export default function UserDashboard() {
                   placeholder="e.g. Modern Villa Living Room"
                   value={briefForm.name}
                   onChange={e => setBriefForm({ ...briefForm, name: e.target.value })}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
 
@@ -128,7 +159,7 @@ export default function UserDashboard() {
                 <select
                   value={briefForm.type}
                   onChange={e => setBriefForm({ ...briefForm, type: e.target.value })}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
                 >
                   {projectTypes.map(t => (
                     <option key={t} value={t} className="bg-slate-950 capitalize">{t}</option>
@@ -143,7 +174,7 @@ export default function UserDashboard() {
                   rows={3}
                   value={briefForm.description}
                   onChange={e => setBriefForm({ ...briefForm, description: e.target.value })}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 resize-none"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 resize-none"
                 />
               </div>
 
@@ -153,7 +184,7 @@ export default function UserDashboard() {
                   <select
                     value={briefForm.priority}
                     onChange={e => setBriefForm({ ...briefForm, priority: e.target.value })}
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -168,7 +199,7 @@ export default function UserDashboard() {
                     required
                     value={briefForm.deadline}
                     onChange={e => setBriefForm({ ...briefForm, deadline: e.target.value })}
-                    className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 cursor-pointer"
                   />
                 </div>
               </div>
@@ -284,27 +315,74 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* Notifications */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+        {/* Payment Simulator & Notifications Sidebar */}
+        <div className="flex flex-col gap-6">
+          {/* Payment Simulator Widget */}
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-emerald-400" />
+              <h3 className="text-white font-semibold text-lg">Simulate Payment</h3>
+            </div>
+            <form onSubmit={handlePaymentSubmit} className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-400">Select Project</label>
+                <select
+                  value={payForm.projectName}
+                  onChange={e => setPayForm({ ...payForm, projectName: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                >
+                  <option value="">Select an active project</option>
+                  {recentProjects.map(p => (
+                    <option key={p._id} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-400">Amount (INR)</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="e.g. 15000"
+                  value={payForm.amount}
+                  onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={paying}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+              >
+                {paying ? (
+                  <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span>Send Simulated Payment</span>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Project Updates Notifications */}
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-4">
               <Bell className="w-5 h-5 text-purple-400" />
               <h3 className="text-white font-semibold text-lg">Project Updates</h3>
             </div>
-          </div>
-          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-            {recentNotifications.map(notification => (
-              <div key={notification._id} className="p-3 bg-white/3 rounded-xl border border-white/5 text-xs">
-                <p className="text-white font-medium mb-1">{notification.title || 'Notification'}</p>
-                <p className="text-slate-400">{notification.message}</p>
-                <p className="text-slate-500 text-[10px] mt-1">{format(new Date(notification.createdAt), 'dd MMM hh:mm a')}</p>
-              </div>
-            ))}
-            {recentNotifications.length === 0 && (
-              <p className="text-slate-500 text-sm text-center py-8">No project notifications yet</p>
-            )}
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+              {recentNotifications.map(notification => (
+                <div key={notification._id} className="p-3 bg-white/3 rounded-xl border border-white/5 text-xs">
+                  <p className="text-white font-medium mb-1">{notification.title || 'Notification'}</p>
+                  <p className="text-slate-400">{notification.message}</p>
+                  <p className="text-slate-500 text-[10px] mt-1">{format(new Date(notification.createdAt), 'dd MMM hh:mm a')}</p>
+                </div>
+              ))}
+              {recentNotifications.length === 0 && (
+                <p className="text-slate-500 text-sm text-center py-8">No project notifications yet</p>
+              )}
+            </div>
           </div>
         </div>
+
       </div>
     </Layout>
   );

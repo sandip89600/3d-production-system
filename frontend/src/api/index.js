@@ -6,6 +6,7 @@ export const authAPI = {
   logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
   refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
   getMe: () => api.get('/auth/me'),
+  logUnauthorized: (route) => api.post('/auth/unauthorized-event', { route }),
   setup2FA: () => api.post('/auth/2fa/setup'),
   verify2FA: (token) => api.post('/auth/2fa/verify', { token }),
   disable2FA: (token) => api.post('/auth/2fa/disable', { token }),

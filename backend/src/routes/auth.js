@@ -25,4 +25,19 @@ router.post('/forgot-password/mobile', otpLimiter, forgotPasswordMobile);
 router.post('/verify-otp', otpLimiter, verifyOTP);
 router.post('/reset-password', resetPassword);
 
+router.post('/unauthorized-event', async (req, res) => {
+  try {
+    const { route } = req.body;
+    const securityService = require('../services/securityService');
+    await securityService.logUnauthorizedAccess({
+      route: route || 'Unknown',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

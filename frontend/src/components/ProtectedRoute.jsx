@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../api';
 
 const roleRedirects = {
   superadmin: '/superadmin/dashboard',
@@ -19,6 +20,16 @@ const getRedirectPath = (path) => {
 export const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        authAPI.logUnauthorized(location.pathname).catch(() => {});
+      } else if (roles && !roles.includes(user.role)) {
+        authAPI.logUnauthorized(`${location.pathname} (Forbidden for role ${user.role})`).catch(() => {});
+      }
+    }
+  }, [loading, user, location.pathname, roles]);
 
   if (loading) {
     return (

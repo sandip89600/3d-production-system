@@ -10,6 +10,7 @@ const LoginLog = require('../models/LoginLog');
 const { generateTokens, logActivity } = require('../middleware/auth');
 const emailService = require('../services/emailService');
 const twilio = require('twilio');
+const securityService = require('../services/securityService');
 
 const getDeviceType = (userAgent = '') => {
   const ua = userAgent.toLowerCase();
@@ -66,6 +67,7 @@ const login = async (req, res) => {
         status: 'failed',
         deviceType: getDeviceType(req.headers['user-agent']),
       });
+      await securityService.logLoginAttempt({ email, ipAddress: req.ip, userAgent: req.headers['user-agent'], success: false, roleAttempted: 'unknown' });
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
@@ -81,6 +83,7 @@ const login = async (req, res) => {
         status: 'failed',
         deviceType: getDeviceType(req.headers['user-agent']),
       });
+      await securityService.logLoginAttempt({ email, ipAddress: req.ip, userAgent: req.headers['user-agent'], success: false, roleAttempted: user.role });
       return res.status(423).json({ success: false, message: 'Account locked due to too many failed attempts. Try again in 15 minutes.' });
     }
 
@@ -102,6 +105,7 @@ const login = async (req, res) => {
         status: 'failed',
         deviceType: getDeviceType(req.headers['user-agent']),
       });
+      await securityService.logLoginAttempt({ email: user.email, ipAddress: req.ip, userAgent: req.headers['user-agent'], success: false, roleAttempted: user.role });
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
@@ -145,6 +149,16 @@ const login = async (req, res) => {
       loginTime: new Date(),
       status: 'success',
       deviceType: getDeviceType(req.headers['user-agent']),
+    });
+
+    await securityService.logLoginAttempt({
+      email: user.email,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      success: true,
+      roleAttempted: user.role,
+      userId: user._id,
+      name: user.name
     });
 
     const userObj = user.toJSON();
