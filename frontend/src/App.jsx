@@ -28,6 +28,7 @@ import ResetSuccessPage from './pages/admin/auth/ResetSuccessPage';
 // Super Admin Dashboards
 import SuperAdminDashboard from './pages/admin/superadmin/Dashboard';
 import AdminManagement from './pages/admin/superadmin/AdminManagement';
+import UserManagement from './pages/admin/superadmin/UserManagement';
 import DepartmentManagement from './pages/admin/superadmin/DepartmentManagement';
 import AllProjects from './pages/admin/superadmin/AllProjects';
 import SecurityLogs from './pages/admin/superadmin/SecurityLogs';
@@ -101,6 +102,7 @@ function App() {
             {/* Super Admin */}
             <Route path="/superadmin/dashboard" element={<ProtectedRoute roles={['superadmin', 'admin']}><SuperAdminDashboard /></ProtectedRoute>} />
             <Route path="/superadmin/admins" element={<ProtectedRoute roles={['superadmin', 'admin']}><AdminManagement /></ProtectedRoute>} />
+            <Route path="/superadmin/users" element={<ProtectedRoute roles={['superadmin', 'admin']}><UserManagement /></ProtectedRoute>} />
             <Route path="/superadmin/departments" element={<ProtectedRoute roles={['superadmin', 'admin']}><DepartmentManagement /></ProtectedRoute>} />
             <Route path="/superadmin/projects" element={<ProtectedRoute roles={['superadmin', 'admin']}><AllProjects /></ProtectedRoute>} />
             <Route path="/superadmin/security" element={<ProtectedRoute roles={['superadmin', 'admin']}><SecurityLogs /></ProtectedRoute>} />
