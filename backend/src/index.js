@@ -141,7 +141,26 @@ app.use((err, req, res, next) => {
   if (err.name === 'MulterError') {
     return res.status(400).json({ success: false, message: err.message });
   }
-  res.status(err.status || 500).json({
+
+  const status = err.status || 500;
+  if (status === 500) {
+    try {
+      const whatsappService = require('./services/whatsappService');
+      const message = 
+        `System Error Detected\n\n` +
+        `Module: Express Web Server\n` +
+        `Error: ${err.message || 'Internal Server Error'}\n` +
+        `Time: ${new Date().toLocaleTimeString()}\n\n` +
+        `Ye attack nahi hai.`;
+      
+      whatsappService.sendAndLogMessage({
+        message,
+        type: 'system'
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
+  res.status(status).json({
     success: false,
     message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
   });

@@ -35,10 +35,30 @@ class SecurityService {
   async logLoginAttempt({ email, ipAddress, userAgent, success, roleAttempted, userId, name }) {
     const browser = this.getBrowser(userAgent);
     const deviceType = this.getDeviceType(userAgent);
-    const location = 'Mumbai, India'; // Simulated geo IP lookups
+    const location = 'Nashik'; // Simulated geo IP lookups
 
     try {
-      // 1. Log attempt in DB
+      let severity = 'INFO';
+      let failedCount = 0;
+
+      // 1. If failed attempt, check brute force threshold
+      if (!success) {
+        const timeLimit = new Date(Date.now() - 10 * 60 * 1000);
+        failedCount = await LoginAttempt.countDocuments({
+          email,
+          success: false,
+          isRouteAccess: false,
+          timestamp: { $gte: timeLimit }
+        }) + 1;
+
+        if (failedCount >= 5) {
+          severity = 'SECURITY';
+        } else {
+          severity = 'INFO'; // Wrong password once is classified as INFO
+        }
+      }
+
+      // Log attempt in DB
       await LoginAttempt.create({
         email,
         ipAddress,
@@ -47,23 +67,15 @@ class SecurityService {
         success,
         roleAttempted,
         browser,
+        severity
       });
 
-      // 2. Alert Level 2: Failed Login alert (3 failed attempts within 10 minutes)
-      if (!success) {
-        const timeLimit = new Date(Date.now() - 10 * 60 * 1000);
-        const failedCount = await LoginAttempt.countDocuments({
-          email,
-          success: false,
-          timestamp: { $gte: timeLimit }
-        });
-
-        if (failedCount >= 3) {
-          await this.triggerFailedLoginAlert({ email, ipAddress, location, timestamp: new Date() });
-        }
+      // 2. Alert Level 2: Failed Login Alert (Locked at 5 attempts)
+      if (!success && failedCount >= 5) {
+        await this.triggerFailedLoginAlert({ email, ipAddress, location, timestamp: new Date() });
       }
 
-      // 3. Alert Level 4: New Device Login Alert
+      // 3. Alert Level 4: New Device Login Alert (Classified as INFO / Login Notification)
       if (success && (roleAttempted === 'admin' || roleAttempted === 'superadmin')) {
         const prevSuccessCount = await LoginAttempt.countDocuments({
           email,
@@ -72,11 +84,11 @@ class SecurityService {
           roleAttempted,
         });
 
-        // If this is the first successful login on this specific browser string
+        // First success login on this device configuration
         if (prevSuccessCount === 1) {
           await this.triggerNewDeviceAlert({
             name: name || email,
-            device: `${deviceType} (${browser})`,
+            device: `${deviceType} ${browser}`,
             ipAddress,
             location,
             timestamp: new Date()
@@ -89,7 +101,7 @@ class SecurityService {
     }
   }
 
-  // 4. Alert Level 3: Unauthorized Access Alert
+  // 4. Alert Level 3: Unauthorized Access Alert (Classified as SECURITY)
   async logUnauthorizedAccess({ route, ipAddress, userAgent }) {
     const browser = this.getBrowser(userAgent);
     const location = 'Mumbai, India';
@@ -102,7 +114,8 @@ class SecurityService {
         success: false,
         isRouteAccess: true,
         route,
-        browser
+        browser,
+        severity: 'SECURITY'
       });
 
       const timeLimit = new Date(Date.now() - 10 * 60 * 1000);
@@ -128,12 +141,12 @@ class SecurityService {
       const project = await Project.findOne({ name: projectName });
 
       if (!client || !project) {
-        console.warn('[SecurityService] Client or Project not found for payment alert logging.');
+        console.warn('[SecurityService] Client or Project not found for payment alert.');
         return;
       }
 
-      // Create Transaction
-      const transaction = await Transaction.create({
+      // Create Transaction entry
+      await Transaction.create({
         transactionId,
         client: client._id,
         amount,
@@ -141,7 +154,6 @@ class SecurityService {
         status: 'success'
       });
 
-      // Dispatch Payment notifications
       await this.triggerPaymentAlert({
         transactionId,
         clientName: client.name,
@@ -160,38 +172,37 @@ class SecurityService {
   // ─────────────────────────────────────────────────────────────────
 
   async triggerFailedLoginAlert({ email, ipAddress, location, timestamp }) {
-    console.log(`🚨 [Security Alarm] Multiple Failed Logins for ${email}`);
+    console.log(`🚨 [Security Alarm] Brute Force Attack detected on ${email} (Account Locked)`);
     const superAdmins = await User.find({ role: 'superadmin', isActive: true });
 
+    // Format matches request specification
     const message = 
       `⚠ *Security Alert*\n\n` +
       `Multiple failed login attempts detected.\n\n` +
-      `Email: ${email}\n` +
-      `IP: ${ipAddress}\n` +
-      `Location: ${location}\n` +
-      `Time: ${timestamp.toLocaleTimeString()}`;
+      `Email:\n${email}\n\n` +
+      `IP:\n${ipAddress}\n\n` +
+      `Location:\n${location}\n\n` +
+      `Time:\n${timestamp.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} ${timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
 
-    // Send WhatsApp to Twilio simulator/group
     await whatsappService.sendAndLogMessage({
       message,
       type: 'security'
     });
 
-    // Create DB notification and email for each Super Admin
     for (const admin of superAdmins) {
       await Notification.create({
         recipient: admin._id,
         type: 'security',
-        title: 'Multiple Failed Logins Detected',
-        message: `3 failed attempts detected for account: ${email}. IP: ${ipAddress}`,
+        title: 'Multiple Failed Logins Detected (Security)',
+        message: `Account temporarily locked. IP: ${ipAddress}`,
         category: 'error',
         priority: 'high'
       });
 
       if (this.io) {
         this.io.to(`user_${admin._id}`).emit('notification', {
-          title: 'Security Alert: Failed Logins',
-          message: `Attempts detected for ${email}`
+          title: '🚨 Security Alert',
+          message: `Brute force protection triggered for ${email}`
         });
       }
 
@@ -205,15 +216,16 @@ class SecurityService {
   }
 
   async triggerNewDeviceAlert({ name, device, ipAddress, location, timestamp }) {
-    console.log(`✅ [Security Alert] New device login detected for: ${name}`);
+    console.log(`✅ [Login Notification] New device login detected for: ${name}`);
 
+    // Format matches request specification exactly
     const message = 
-      `✅ *New Admin Login Detected*\n\n` +
-      `Admin: ${name}\n` +
+      `New Login Detected\n\n` +
+      `User: ${name}\n` +
       `Device: ${device}\n` +
-      `IP: ${ipAddress}\n` +
       `Location: ${location}\n` +
-      `Time: ${timestamp.toLocaleTimeString()}`;
+      `Time: ${timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}\n\n` +
+      `If this was you, no action required.`;
 
     await whatsappService.sendAndLogMessage({
       message,
@@ -226,30 +238,30 @@ class SecurityService {
         recipient: admin._id,
         type: 'security',
         title: 'New Device Login Detected',
-        message: `New login for ${name} using ${device} from IP ${ipAddress}`,
+        message: `User ${name} logged in from device ${device}`,
         category: 'info',
         priority: 'medium'
       });
 
       if (this.io) {
         this.io.to(`user_${admin._id}`).emit('notification', {
-          title: 'Security Alert: New Device Login',
-          message: `Admin ${name} logged in from a new browser.`
+          title: 'Login Alert',
+          message: `New login for ${name}.`
         });
       }
     }
   }
 
   async triggerUnauthorizedAlert({ ipAddress, route, location, count }) {
-    console.log(`🚨 [Security Alert] Unauthorized direct accesses from: ${ipAddress}`);
+    console.log(`🚨 [Security Alarm] Direct Unauthorized Access scans detected from: ${ipAddress}`);
 
     const message = 
       `⚠ *Security Alert*\n\n` +
       `Unauthorized Access Attempts detected.\n\n` +
-      `IP: ${ipAddress}\n` +
-      `Route: ${route}\n` +
-      `Location: ${location}\n` +
-      `Attempts: ${count} in 10 minutes`;
+      `IP:\n${ipAddress}\n\n` +
+      `Route:\n${route}\n\n` +
+      `Location:\n${location}\n\n` +
+      `Attempts:\n${count} in 10 minutes`;
 
     await whatsappService.sendAndLogMessage({
       message,
@@ -261,7 +273,7 @@ class SecurityService {
       await Notification.create({
         recipient: admin._id,
         type: 'security',
-        title: 'Direct Unauthorized Access Scanned',
+        title: 'Direct Unauthorized Access Scan (Security)',
         message: `IP ${ipAddress} logged ${count} unauthorized direct hits under route ${route}`,
         category: 'error',
         priority: 'high'
@@ -279,19 +291,19 @@ class SecurityService {
   async triggerPaymentAlert({ transactionId, clientName, companyName, amount, projectName }) {
     console.log(`💰 [Finance Alert] Payment of ₹${amount} received from ${clientName}`);
 
+    // Format matches request specification exactly
     const message = 
       `💰 *Payment Received*\n\n` +
-      `Client: ${clientName} (${companyName})\n` +
-      `Amount: ₹${amount.toLocaleString('en-IN')}\n` +
-      `Project: ${projectName}\n` +
-      `Transaction ID: ${transactionId}`;
+      `Client:\n${clientName}\n\n` +
+      `Amount:\n₹${amount.toLocaleString('en-IN')}\n\n` +
+      `Project:\n${projectName}\n\n` +
+      `Transaction ID:\n${transactionId}`;
 
     await whatsappService.sendAndLogMessage({
       message,
       type: 'payment'
     });
 
-    // Notify all admin and superadmin users
     const staff = await User.find({ role: { $in: ['admin', 'superadmin'] }, isActive: true });
     for (const user of staff) {
       await Notification.create({
@@ -305,12 +317,11 @@ class SecurityService {
 
       if (this.io) {
         this.io.to(`user_${user._id}`).emit('notification', {
-          title: 'Payment Received',
+          title: '💰 Payment Received',
           message: `₹${amount} received for project: ${projectName}`
         });
       }
 
-      // Send payment email
       await emailService.sendSecurityAlert(user.email, '💰 Payment Transaction Success Alert', {
         client: clientName,
         company: companyName,

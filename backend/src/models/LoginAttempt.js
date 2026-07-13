@@ -10,7 +10,8 @@ const loginAttemptSchema = new mongoose.Schema({
   roleAttempted: { type: String },
   browser: { type: String, default: 'Unknown' },
   isRouteAccess: { type: Boolean, default: false },
-  route: { type: String }
+  route: { type: String },
+  severity: { type: String, enum: ['INFO', 'WARNING', 'SECURITY', 'SYSTEM', 'CRITICAL'], default: 'INFO' }
 });
 
 module.exports = mongoose.model('LoginAttempt', loginAttemptSchema);
