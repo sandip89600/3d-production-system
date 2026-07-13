@@ -9,6 +9,14 @@ const { logActivity } = require('../middleware/auth');
 const storageService = require('../services/storageService');
 const path = require('path');
 const ProjectDownloadLog = require('../models/ProjectDownloadLog');
+const DownloadLog = require('../models/DownloadLog');
+
+const getDeviceType = (userAgent = '') => {
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('tablet') || ua.includes('ipad')) return 'tablet';
+  if (ua.includes('mobi') || ua.includes('android') || ua.includes('iphone') || ua.includes('ipod')) return 'mobile';
+  return 'desktop';
+};
 
 // GET /api/projects
 const getProjects = async (req, res) => {
@@ -72,36 +80,78 @@ const createProject = async (req, res) => {
   try {
     const { name, type, department, description, priority, deadline, clientName, estimatedDays, tags } = req.body;
 
-    const dept = await Department.findById(department).populate('employees admin');
-    if (!dept) return res.status(404).json({ success: false, message: 'Department not found' });
+    // Automatic or provided department assignment
+    let dept;
+    if (department) {
+      dept = await Department.findById(department).populate('employees admin');
+    } else {
+      dept = await Department.findOne({
+        name: { $regex: new RegExp(`^${type}$`, 'i') }
+      }).populate('employees admin');
+      
+      // Fallback
+      if (!dept) {
+        dept = await Department.findOne({}).populate('employees admin');
+      }
+    }
+
+    if (!dept) return res.status(404).json({ success: false, message: 'Department not found or configured' });
 
     const projectData = {
-      name, type, department, description, priority,
+      name,
+      type,
+      department: dept._id,
+      description,
+      priority,
       deadline: new Date(deadline),
       uploadedBy: req.user._id,
-      clientName,
+      clientName: clientName || req.user.companyName || req.user.name,
       estimatedDays: estimatedDays ? parseInt(estimatedDays) : undefined,
       tags: tags ? (Array.isArray(tags) ? tags : tags.split(',').map(t => t.trim())) : [],
       status: 'available',
     };
 
-    if (req.file) {
-      // Upload to cloud storage (S3 / Cloudinary / local fallback)
-      const uploaded = await storageService.uploadFile({
-        buffer: req.file.buffer,
-        originalName: req.file.originalname,
-        mimeType: req.file.mimetype,
-        fileSize: req.file.size,
-        folder: 'projects',
-        uploadedBy: req.user._id,
-      });
-      projectData.fileUrl = uploaded.url;
-      projectData.fileName = req.file.originalname;
-      projectData.fileSize = req.file.size;
-      projectData.fileType = path.extname(req.file.originalname).toLowerCase();
+    // Create the project document first to obtain its generated projectId code
+    const project = await Project.create(projectData);
+
+    // If client created it, increment their total project counter
+    if (req.user.role === 'client') {
+      await User.findByIdAndUpdate(req.user._id, { $inc: { totalProjects: 1 } });
     }
 
-    const project = await Project.create(projectData);
+    if (req.file) {
+      try {
+        // Upload to cloud storage (which will query the project using project._id to fetch its human-readable projectId code)
+        const uploaded = await storageService.uploadFile({
+          buffer: req.file.buffer,
+          originalName: req.file.originalname,
+          mimeType: req.file.mimetype,
+          fileSize: req.file.size,
+          folder: 'projects',
+          uploadedBy: req.user._id,
+          projectId: project._id,
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+          userAgent: req.headers['user-agent'],
+        });
+
+        // Update the project with the upload details
+        await Project.findByIdAndUpdate(project._id, {
+          fileUrl: uploaded.url,
+          fileName: req.file.originalname,
+          fileSize: req.file.size,
+          fileType: path.extname(req.file.originalname).toLowerCase(),
+        });
+
+        project.fileUrl = uploaded.url;
+        project.fileName = req.file.originalname;
+        project.fileSize = req.file.size;
+        project.fileType = path.extname(req.file.originalname).toLowerCase();
+      } catch (uploadErr) {
+        // Rollback project creation if S3 upload fails
+        await Project.findByIdAndDelete(project._id);
+        throw uploadErr;
+      }
+    }
 
     // WhatsApp notification
     const uploader = req.user;
@@ -438,7 +488,11 @@ const getSecureDownloadUrl = async (req, res) => {
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
     if (!project.fileName) return res.status(400).json({ success: false, message: 'Project has no file uploaded' });
 
-    // Log the download request
+    // Fetch the file record first to get file ID
+    const FileModel = require('../models/File');
+    const fileRecord = await FileModel.findOne({ projectId: project._id, isDeleted: false });
+
+    // Log the download request to ProjectDownloadLog (legacy)
     await ProjectDownloadLog.create({
       project: project._id,
       employee: req.user._id,
@@ -447,12 +501,22 @@ const getSecureDownloadUrl = async (req, res) => {
       userAgent: req.headers['user-agent'],
     });
 
+    // Log the download request to DownloadLog (new, unified logs)
+    if (fileRecord) {
+      await DownloadLog.create({
+        userId: req.user._id,
+        projectId: project._id,
+        fileId: fileRecord._id,
+        downloadedAt: new Date(),
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent'],
+        deviceType: getDeviceType(req.headers['user-agent']),
+      });
+    }
+
     await logActivity(req, 'project_download', `Downloaded file for project: ${project.name} (${project.projectId})`, { projectId: project._id });
 
     // Generate signed URL (expires in 24 hours = 86400 seconds)
-    const FileModel = require('../models/File');
-    const fileRecord = await FileModel.findOne({ projectId: project._id, isDeleted: false });
-
     let downloadUrl = project.fileUrl;
     if (fileRecord) {
       downloadUrl = await storageService.getSignedUrl(fileRecord._id, 86400);

@@ -80,11 +80,12 @@ export default function SuperAdminDashboard() {
         <StatsCard title="Completed" value={overview.completedProjects} icon={CheckCircle2} color="emerald" />
         <StatsCard title="Delayed" value={overview.delayedProjects} icon={AlertTriangle} color="red" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatsCard title="Total Users" value={overview.totalUsers} icon={Users} color="cyan" />
-        <StatsCard title="Employees" value={overview.totalEmployees} icon={Layers} color="indigo" />
-        <StatsCard title="Admins" value={overview.totalAdmins} icon={Zap} color="amber" />
-        <StatsCard title="Departments" value={overview.totalDepartments} icon={Building2} color="pink" />
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <StatsCard title="Registered Users" value={overview.totalRegisteredUsers || overview.totalUsers} icon={Users} color="cyan" />
+        <StatsCard title="Active Users" value={overview.activeUsers} icon={CheckCircle2} color="indigo" />
+        <StatsCard title="Online Users" value={overview.onlineUsers} icon={Activity} color="emerald" />
+        <StatsCard title="Logins Today" value={overview.loginsToday} icon={Zap} color="amber" />
+        <StatsCard title="New This Month" value={overview.newUsersThisMonth} icon={TrendingUp} color="pink" />
       </div>
 
       {/* Charts Row */}
@@ -187,6 +188,97 @@ export default function SuperAdminDashboard() {
               <p className="text-slate-500 text-sm text-center py-4">No admin data yet</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Security Monitoring & Log Grids */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Recent Logins */}
+        <div className="glass-card p-6">
+          <h3 className="text-white font-semibold mb-1">Recent Logins</h3>
+          <p className="text-slate-400 text-xs mb-4">Successful user sessions</p>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            {(data?.recentLogins || []).map((log, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-white/3 rounded-xl border border-white/5 text-xs">
+                <div>
+                  <p className="text-white font-medium">{log.userId?.name || log.email}</p>
+                  <p className="text-slate-400 mt-0.5">{log.ipAddress || 'unknown ip'} · <span className="capitalize">{log.deviceType}</span></p>
+                </div>
+                <span className="text-slate-400 font-medium">
+                  {log.loginTime ? format(new Date(log.loginTime), 'hh:mm a') : '—'}
+                </span>
+              </div>
+            ))}
+            {!data?.recentLogins?.length && (
+              <p className="text-slate-500 text-sm text-center py-4">No logins tracked yet</p>
+            )}
+          </div>
+        </div>
+
+        {/* Failed Login Attempts */}
+        <div className="glass-card p-6">
+          <h3 className="text-white font-semibold mb-1 text-red-400">Failed Login Attempts</h3>
+          <p className="text-slate-400 text-xs mb-4">Security event warnings</p>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            {(data?.failedLogins || []).map((log, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-red-500/5 rounded-xl border border-red-500/10 text-xs">
+                <div>
+                  <p className="text-white font-medium">{log.email}</p>
+                  <p className="text-red-400 mt-0.5">{log.ipAddress || 'unknown ip'} · <span className="capitalize">{log.deviceType}</span></p>
+                </div>
+                <span className="text-slate-400 font-medium">
+                  {log.loginTime ? format(new Date(log.loginTime), 'hh:mm a') : '—'}
+                </span>
+              </div>
+            ))}
+            {!data?.failedLogins?.length && (
+              <p className="text-slate-500 text-sm text-center py-4">No failed attempts logged</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* File Upload Activity */}
+      <div className="glass-card p-6 mb-6">
+        <h3 className="text-white font-semibold mb-1">File Upload Activity</h3>
+        <p className="text-slate-400 text-xs mb-4">Cloud storage file write records</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left border-b border-white/5">
+                <th className="text-slate-400 font-medium pb-3 pr-4">User</th>
+                <th className="text-slate-400 font-medium pb-3 pr-4">Project</th>
+                <th className="text-slate-400 font-medium pb-3 pr-4">File Name</th>
+                <th className="text-slate-400 font-medium pb-3 pr-4">Size</th>
+                <th className="text-slate-400 font-medium pb-3">Uploaded At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data?.recentUploads || []).map((log, i) => (
+                <tr key={i} className="table-row text-xs">
+                  <td className="py-3 pr-4">
+                    <p className="text-white font-medium">{log.userId?.name || 'Deleted User'}</p>
+                    <p className="text-slate-500">{log.userId?.companyName || 'Internal Staff'}</p>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <span className="text-slate-300">{log.projectId?.name || '—'}</span>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <span className="text-amber-400 font-mono">{log.fileId?.originalName || '—'}</span>
+                  </td>
+                  <td className="py-3 pr-4 text-slate-400">
+                    {log.fileId?.fileSize ? `${(log.fileId.fileSize / (1024 * 1024)).toFixed(2)} MB` : '—'}
+                  </td>
+                  <td className="py-3 text-slate-400">
+                    {log.uploadedAt ? format(new Date(log.uploadedAt), 'dd MMM hh:mm a') : '—'}
+                  </td>
+                </tr>
+              ))}
+              {!data?.recentUploads?.length && (
+                <tr><td colSpan={5} className="py-8 text-center text-slate-500">No uploads tracked yet</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

@@ -5,6 +5,8 @@ const Department = require('../models/Department');
 const ActivityLog = require('../models/ActivityLog');
 const ProjectAssignment = require('../models/ProjectAssignment');
 const ProgressLog = require('../models/ProgressLog');
+const LoginLog = require('../models/LoginLog');
+const UploadLog = require('../models/UploadLog');
 
 class DashboardService {
   /**
@@ -108,6 +110,17 @@ class DashboardService {
       },
     ]);
 
+    // New Log Stats
+    const totalRegisteredUsers = await User.countDocuments({});
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const onlineUsers = await User.countDocuments({ lastLogin: { $gte: new Date(Date.now() - 15 * 60 * 1000) } });
+    const loginsToday = await LoginLog.countDocuments({ loginTime: { $gte: todayStart } });
+    const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } });
+
+    const recentLogins = await LoginLog.find().sort({ loginTime: -1 }).limit(5).populate('userId', 'name');
+    const failedLogins = await LoginLog.find({ status: 'failed' }).sort({ loginTime: -1 }).limit(5);
+    const recentUploads = await UploadLog.find().sort({ uploadedAt: -1 }).limit(5).populate('userId', 'name').populate('projectId', 'name');
+
     return {
       cards: {
         totalProjects: overallStats.totalProjects,
@@ -118,22 +131,26 @@ class DashboardService {
         projectsUploadedToday: overallStats.uploadedToday,
         employeesWorkingToday: workingToday,
       },
-      employeeStatistics: {
-        totalEmployees,
-        activeEmployees,
-        workingToday,
-        topPerformingEmployees: topEmployees,
-        lowestPerformingEmployees: bottomEmployees,
+      employeePerformance: {
+        top: topEmployees,
+        bottom: bottomEmployees,
       },
-      adminStatistics: {
-        totalAdmins,
-        uploadsByAdmin: adminUploads,
-        monthlyUploadCount: monthlyUploads,
+      adminUploads,
+      monthlyUploads: monthlyUploads.map(m => ({
+        month: `${m._id.year}-${String(m._id.month).padStart(2, '0')}`,
+        count: m.count,
+      })),
+      departmentStats: deptStats,
+      userStats: {
+        totalRegisteredUsers,
+        activeUsers,
+        onlineUsers,
+        loginsToday,
+        newUsersThisMonth,
       },
-      departmentStatistics: {
-        totalDepartments,
-        stats: deptStats,
-      },
+      recentLogins,
+      failedLogins,
+      recentUploads,
     };
   }
 
@@ -214,6 +231,43 @@ class DashboardService {
       { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]);
 
+    // Admin user details for department scope
+    const adminUser = await User.findById(adminId);
+    const deptId = adminUser ? adminUser.department : null;
+
+    let totalClients = 0;
+    let activeClients = 0;
+    let clientUploadCount = 0;
+    let clientProjectCount = 0;
+    let clientActivity = [];
+
+    if (deptId) {
+      const clientIds = await User.find({ role: 'client' }).distinct('_id');
+      totalClients = clientIds.length;
+      activeClients = await User.countDocuments({ role: 'client', isActive: true });
+      
+      clientProjectCount = await Project.countDocuments({
+        department: deptId,
+        uploadedBy: { $in: clientIds }
+      });
+
+      const FileModel = require('../models/File');
+      clientUploadCount = await FileModel.countDocuments({
+        projectId: { $in: await Project.find({ department: deptId }).distinct('_id') },
+        uploadedBy: { $in: clientIds }
+      });
+
+      clientActivity = await UploadLog.find({
+        projectId: { $in: await Project.find({ department: deptId }).distinct('_id') },
+        userId: { $in: clientIds }
+      })
+      .populate('userId', 'name email companyName')
+      .populate('projectId', 'name projectId')
+      .populate('fileId', 'originalName fileSize')
+      .sort({ uploadedAt: -1 })
+      .limit(10);
+    }
+
     return {
       cards: {
         myUploadedProjects: myStats.totalUploaded,
@@ -226,6 +280,13 @@ class DashboardService {
       },
       weeklyStatistics: weeklyStats,
       monthlyStatistics: monthlyStats,
+      clientStats: {
+        totalClients,
+        activeClients,
+        clientUploadCount,
+        clientProjectCount,
+      },
+      clientActivity,
     };
   }
 
@@ -453,6 +514,50 @@ class DashboardService {
       .limit(limit);
 
     return logs;
+  }
+
+  /**
+   * Client (User) Dashboard Analytics
+   */
+  async getClientDashboardData(clientId) {
+    const cid = new mongoose.Types.ObjectId(clientId);
+    
+    // Scoped projects
+    const totalProjects = await Project.countDocuments({ uploadedBy: cid });
+    const completedProjects = await Project.countDocuments({ uploadedBy: cid, status: 'completed' });
+    const pendingProjects = await Project.countDocuments({ uploadedBy: cid, status: { $ne: 'completed' } });
+    const delayedProjects = await Project.countDocuments({ uploadedBy: cid, status: 'delayed' });
+    
+    const recentProjects = await Project.find({ uploadedBy: cid })
+      .populate('department', 'name code color icon')
+      .populate('assignedTo', 'name email designation')
+      .sort({ createdAt: -1 })
+      .limit(10);
+      
+    // Uploaded files
+    const FileModel = require('../models/File');
+    const uploadedFiles = await FileModel.find({ uploadedBy: cid, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .limit(15);
+      
+    // Notifications
+    const Notification = require('../models/Notification');
+    const recentNotifications = await Notification.find({ recipient: cid })
+      .sort({ createdAt: -1 })
+      .limit(10);
+      
+    return {
+      stats: {
+        totalProjects,
+        completedProjects,
+        pendingProjects,
+        delayedProjects,
+        uploadedFilesCount: uploadedFiles.length,
+      },
+      recentProjects,
+      uploadedFiles,
+      recentNotifications,
+    };
   }
 }
 

@@ -5,20 +5,40 @@ const Department = require('../models/Department');
 const ActivityLog = require('../models/ActivityLog');
 
 // GET /api/analytics/overview — Super Admin
+// GET /api/analytics/overview — Super Admin
 const getOverview = async (req, res) => {
   try {
+    const LoginLog = require('../models/LoginLog');
+    const UploadLog = require('../models/UploadLog');
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const firstDayOfMonth = new Date();
+    firstDayOfMonth.setDate(1);
+    firstDayOfMonth.setHours(0, 0, 0, 0);
+
     const [
       totalProjects, activeProjects, completedProjects, delayedProjects,
       totalUsers, totalEmployees, totalAdmins, totalDepartments,
+      activeUsersCount, onlineUsersCount, loginsTodayCount, newUsersThisMonthCount,
+      recentLogins, failedLogins, recentUploads
     ] = await Promise.all([
       Project.countDocuments(),
       Project.countDocuments({ status: { $in: ['available', 'in-progress'] } }),
       Project.countDocuments({ status: 'completed' }),
       Project.countDocuments({ status: 'delayed' }),
-      User.countDocuments({ isActive: true }),
+      User.countDocuments(),
       User.countDocuments({ role: 'employee', isActive: true }),
       User.countDocuments({ role: 'admin', isActive: true }),
       Department.countDocuments({ isActive: true }),
+      User.countDocuments({ isActive: true }),
+      User.countDocuments({ lastLogin: { $gte: new Date(Date.now() - 15 * 60 * 1000) } }),
+      LoginLog.distinct('userId', { loginTime: { $gte: todayStart }, status: 'success' }).then(arr => arr.length),
+      User.countDocuments({ createdAt: { $gte: firstDayOfMonth } }),
+      LoginLog.find({ status: 'success' }).sort({ loginTime: -1 }).limit(10).populate('userId', 'name email'),
+      LoginLog.find({ status: 'failed' }).sort({ loginTime: -1 }).limit(10).populate('userId', 'name email'),
+      UploadLog.find({}).sort({ uploadedAt: -1 }).limit(10).populate('userId', 'name email companyName').populate('projectId', 'name projectId')
     ]);
 
     // Project status breakdown
@@ -58,11 +78,28 @@ const getOverview = async (req, res) => {
 
     res.json({
       success: true,
-      overview: { totalProjects, activeProjects, completedProjects, delayedProjects, totalUsers, totalEmployees, totalAdmins, totalDepartments },
+      overview: {
+        totalProjects,
+        activeProjects,
+        completedProjects,
+        delayedProjects,
+        totalUsers,
+        totalEmployees,
+        totalAdmins,
+        totalDepartments,
+        totalRegisteredUsers: totalUsers,
+        activeUsers: activeUsersCount,
+        onlineUsers: onlineUsersCount,
+        loginsToday: loginsTodayCount,
+        newUsersThisMonth: newUsersThisMonthCount
+      },
       statusBreakdown,
       deptStats,
       recentProjects,
       monthlyTrend,
+      recentLogins,
+      failedLogins,
+      recentUploads
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -191,6 +228,8 @@ const getActivityLogs = async (req, res) => {
 const getAdminDashboard = async (req, res) => {
   try {
     const adminId = req.user._id;
+    const deptId = req.user.department;
+
     const [uploaded, completed, active, inReview, delayed] = await Promise.all([
       Project.countDocuments({ uploadedBy: adminId }),
       Project.countDocuments({ uploadedBy: adminId, status: 'completed' }),
@@ -210,7 +249,54 @@ const getAdminDashboard = async (req, res) => {
       .populate('department', 'name')
       .sort({ updatedAt: -1 });
 
-    res.json({ success: true, stats: { uploaded, completed, active, inReview, delayed }, recentProjects, pendingReviews });
+    // Client Metrics
+    let totalClients = 0;
+    let activeClients = 0;
+    let clientUploadCount = 0;
+    let clientProjectCount = 0;
+    let clientActivity = [];
+
+    const clientIds = await User.find({ role: 'client' }).distinct('_id');
+    totalClients = clientIds.length;
+    activeClients = await User.countDocuments({ role: 'client', isActive: true });
+
+    if (deptId) {
+      clientProjectCount = await Project.countDocuments({
+        department: deptId,
+        uploadedBy: { $in: clientIds }
+      });
+
+      const FileModel = require('../models/File');
+      clientUploadCount = await FileModel.countDocuments({
+        projectId: { $in: await Project.find({ department: deptId }).distinct('_id') },
+        uploadedBy: { $in: clientIds }
+      });
+
+      const UploadLog = require('../models/UploadLog');
+      clientActivity = await UploadLog.find({
+        projectId: { $in: await Project.find({ department: deptId }).distinct('_id') },
+        userId: { $in: clientIds }
+      })
+      .populate('userId', 'name email companyName')
+      .populate('projectId', 'name projectId')
+      .populate('fileId', 'originalName fileSize')
+      .sort({ uploadedAt: -1 })
+      .limit(10);
+    }
+
+    res.json({
+      success: true,
+      stats: { uploaded, completed, active, inReview, delayed },
+      recentProjects,
+      pendingReviews,
+      clientStats: {
+        totalClients,
+        activeClients,
+        clientUploadCount,
+        clientProjectCount
+      },
+      clientActivity
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -237,7 +323,21 @@ const getEmployeeDashboard = async (req, res) => {
   }
 };
 
+// GET /api/analytics/client-dashboard
+const getClientDashboard = async (req, res) => {
+  try {
+    const dashboardService = require('../services/dashboardService');
+    const data = await dashboardService.getClientDashboardData(req.user._id);
+    res.json({
+      success: true,
+      ...data,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getOverview, getAdminPerformance, getEmployeePerformance, getDepartmentPerformance,
-  getActivityLogs, getAdminDashboard, getEmployeeDashboard,
+  getActivityLogs, getAdminDashboard, getEmployeeDashboard, getClientDashboard,
 };

@@ -10,6 +10,7 @@ const {
   getEmployeesPerformance,
   getRecentActivities,
   getDashboardNotifications,
+  getClientDashboard,
 } = require('../controllers/dashboardController');
 const { authenticateJWT, requireRole } = require('../middleware/auth');
 const { validateDashboardQueries } = require('../validators/dashboardValidator');
@@ -21,6 +22,7 @@ router.use(authenticateJWT);
 router.get('/superadmin', requireRole('superadmin', 'admin'), getSuperAdminDashboard);
 router.get('/admin', requireRole('admin', 'superadmin'), getAdminDashboard);
 router.get('/employee', requireRole('employee'), getEmployeeDashboard);
+router.get('/client', requireRole('client'), getClientDashboard);
 
 // Common Chart & Analytics APIs
 router.get('/project-status', getProjectStatusStats);

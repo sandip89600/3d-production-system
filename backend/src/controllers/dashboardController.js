@@ -57,6 +57,22 @@ const getEmployeeDashboard = async (req, res) => {
   }
 };
 
+// GET /api/dashboard/client
+const getClientDashboard = async (req, res) => {
+  try {
+    const data = await dashboardService.getClientDashboardData(req.user._id);
+
+    await logActivity(req, 'dashboard_view', 'Viewed Client Dashboard analytics');
+
+    res.json({
+      success: true,
+      ...data,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // GET /api/dashboard/project-status
 const getProjectStatusStats = async (req, res) => {
   try {
@@ -145,4 +161,5 @@ module.exports = {
   getEmployeesPerformance,
   getRecentActivities,
   getDashboardNotifications,
+  getClientDashboard,
 };

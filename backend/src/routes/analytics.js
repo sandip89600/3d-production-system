@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getOverview, getAdminPerformance, getEmployeePerformance, getDepartmentPerformance,
-  getActivityLogs, getAdminDashboard, getEmployeeDashboard,
+  getActivityLogs, getAdminDashboard, getEmployeeDashboard, getClientDashboard,
 } = require('../controllers/analyticsController');
 const { authenticateJWT, requireRole } = require('../middleware/auth');
 const notificationService = require('../services/notificationService');
@@ -18,6 +18,7 @@ router.get('/department-performance', requireRole('superadmin', 'admin'), getDep
 router.get('/activity-logs', requireRole('superadmin', 'admin'), getActivityLogs);
 router.get('/admin-dashboard', requireRole('admin', 'superadmin'), getAdminDashboard);
 router.get('/employee-dashboard', requireRole('employee'), getEmployeeDashboard);
+router.get('/client-dashboard', requireRole('client'), getClientDashboard);
 
 // Notifications
 router.get('/notifications', async (req, res) => {

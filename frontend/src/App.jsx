@@ -16,6 +16,7 @@ import Login from './pages/user/Login';
 import Signup from './pages/user/Signup';
 import ForgotPassword from './pages/user/ForgotPassword';
 import ResetPassword from './pages/user/ResetPassword';
+import UserDashboard from './pages/user/UserDashboard';
 
 // Internal Staff Auth (Admin Portal)
 import LoginPage from './pages/admin/auth/LoginPage';
@@ -91,6 +92,9 @@ function App() {
             {/* Shared Protected Profile */}
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/download-project/:id" element={<ProtectedRoute><DownloadProjectPage /></ProtectedRoute>} />
+            
+            {/* Client (User) Protected Dashboard */}
+            <Route path="/dashboard" element={<ProtectedRoute roles={['client']}><UserDashboard /></ProtectedRoute>} />
 
             {/* Super Admin */}
             <Route path="/superadmin/dashboard" element={<ProtectedRoute roles={['superadmin', 'admin']}><SuperAdminDashboard /></ProtectedRoute>} />

@@ -48,6 +48,42 @@ const deleteLocally = (storageKey) => {
   }
 };
 
+const getS3Key = async (folder, fileName, uploadedBy, projectId) => {
+  const cleanFileName = fileName;
+  
+  if (folder === 'profiles') {
+    return `users/${uploadedBy}/profile/${cleanFileName}`;
+  }
+  
+  if (projectId) {
+    try {
+      const Project = require('../models/Project');
+      const projectDoc = await Project.findById(projectId);
+      const projectIdCode = projectDoc ? projectDoc.projectId : projectId;
+      
+      if (folder === 'projects') {
+        return `projects/${projectIdCode}/source/${cleanFileName}`;
+      }
+      if (folder === 'deliverables') {
+        return `deliverables/${projectIdCode}/final/${cleanFileName}`;
+      }
+      if (folder === 'previews') {
+        return `previews/${projectIdCode}/images/${cleanFileName}`;
+      }
+    } catch (err) {
+      console.error('[StorageService] Error getting project code for S3 key:', err.message);
+    }
+  }
+
+  // Fallbacks
+  if (folder === 'projects') return `projects/${projectId || 'general'}/source/${cleanFileName}`;
+  if (folder === 'deliverables') return `deliverables/${projectId || 'general'}/final/${cleanFileName}`;
+  if (folder === 'previews') return `previews/${projectId || 'general'}/images/${cleanFileName}`;
+  if (folder === 'profiles') return `users/${uploadedBy || 'general'}/profile/${cleanFileName}`;
+  
+  return `${folder}/${cleanFileName}`;
+};
+
 // ─── Core: Upload ─────────────────────────────────────────────────
 
 /**
@@ -61,6 +97,8 @@ const deleteLocally = (storageKey) => {
  * @param {string}              [opts.folder]     - "projects"|"profiles"|"documents"|"deliverables"|"general"
  * @param {ObjectId|string}     opts.uploadedBy   - User _id
  * @param {ObjectId|string}     [opts.projectId]  - Project _id (optional)
+ * @param {string}              [opts.ipAddress]  - Client IP
+ * @param {string}              [opts.userAgent]  - User Agent
  * @returns {Promise<{ url, storageKey, fileRecord }>}
  */
 const uploadFile = async ({
@@ -71,6 +109,8 @@ const uploadFile = async ({
   folder = 'general',
   uploadedBy,
   projectId,
+  ipAddress = null,
+  userAgent = null,
 }) => {
   const fileName = generateFileName(originalName);
   const ext = path.extname(originalName).toLowerCase();
@@ -78,7 +118,7 @@ const uploadFile = async ({
 
   if (PROVIDER === 's3') {
     const { uploadToS3 } = require('./awsS3Service');
-    const key = `${folder}/${fileName}`;
+    const key = await getS3Key(folder, fileName, uploadedBy, projectId);
     ({ url, storageKey } = await uploadToS3(buffer, key, mimeType));
   } else if (PROVIDER === 'cloudinary') {
     const { uploadToCloudinary } = require('./cloudinaryService');
@@ -90,7 +130,7 @@ const uploadFile = async ({
     ({ url, storageKey } = saveLocally(buffer, folder, fileName));
   }
 
-  // Persist metadata in MongoDB
+  // Persist metadata in MongoDB (project_files record)
   const fileRecord = await File.create({
     originalName,
     fileName,
@@ -104,6 +144,22 @@ const uploadFile = async ({
     uploadedBy,
     projectId: projectId || undefined,
   });
+
+  // Create upload_logs record
+  try {
+    const UploadLog = require('../models/UploadLog');
+    await UploadLog.create({
+      userId: uploadedBy,
+      projectId: projectId || undefined,
+      fileId: fileRecord._id,
+      uploadedAt: new Date(),
+      ipAddress,
+      userAgent,
+      uploadSource: 'web',
+    });
+  } catch (err) {
+    console.error('[StorageService] Failed to create upload log:', err.message);
+  }
 
   return { url, storageKey, fileRecord };
 };

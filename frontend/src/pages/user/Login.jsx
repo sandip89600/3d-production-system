@@ -8,6 +8,7 @@ const roleRedirects = {
   superadmin: '/superadmin/dashboard',
   admin: '/admin/dashboard',
   employee: '/employee/dashboard',
+  client: '/dashboard',
 };
 
 export default function Login() {

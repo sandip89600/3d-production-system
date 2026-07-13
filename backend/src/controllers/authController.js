@@ -6,9 +6,17 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const Department = require('../models/Department');
 const ActivityLog = require('../models/ActivityLog');
+const LoginLog = require('../models/LoginLog');
 const { generateTokens, logActivity } = require('../middleware/auth');
 const emailService = require('../services/emailService');
 const twilio = require('twilio');
+
+const getDeviceType = (userAgent = '') => {
+  const ua = userAgent.toLowerCase();
+  if (ua.includes('tablet') || ua.includes('ipad')) return 'tablet';
+  if (ua.includes('mobi') || ua.includes('android') || ua.includes('iphone') || ua.includes('ipod')) return 'mobile';
+  return 'desktop';
+};
 
 const sendSMS = async (to, content) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -49,11 +57,30 @@ const login = async (req, res) => {
     const user = await User.findOne({ email }).select('+password +twoFactorSecret +loginAttempts +lockUntil +refreshTokens');
     if (!user) {
       await ActivityLog.create({ userEmail: email, action: 'login_failed', success: false, details: { reason: 'User not found' }, ip: req.ip });
+      await LoginLog.create({
+        email,
+        role: 'unknown',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        loginTime: new Date(),
+        status: 'failed',
+        deviceType: getDeviceType(req.headers['user-agent']),
+      });
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     if (user.isLocked) {
       await ActivityLog.create({ user: user._id, userEmail: email, action: 'login_locked', success: false, ip: req.ip });
+      await LoginLog.create({
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        loginTime: new Date(),
+        status: 'failed',
+        deviceType: getDeviceType(req.headers['user-agent']),
+      });
       return res.status(423).json({ success: false, message: 'Account locked due to too many failed attempts. Try again in 15 minutes.' });
     }
 
@@ -65,6 +92,16 @@ const login = async (req, res) => {
     if (!isMatch) {
       await user.incLoginAttempts();
       await ActivityLog.create({ user: user._id, userEmail: email, action: 'login_failed', success: false, details: { attempts: user.loginAttempts + 1 }, ip: req.ip });
+      await LoginLog.create({
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        loginTime: new Date(),
+        status: 'failed',
+        deviceType: getDeviceType(req.headers['user-agent']),
+      });
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
@@ -97,6 +134,17 @@ const login = async (req, res) => {
     await ActivityLog.create({
       user: user._id, userEmail: user.email, userRole: user.role,
       action: 'login', success: true, ip: req.ip, userAgent: req.headers['user-agent'],
+    });
+
+    await LoginLog.create({
+      userId: user._id,
+      email: user.email,
+      role: user.role,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      loginTime: new Date(),
+      status: 'success',
+      deviceType: getDeviceType(req.headers['user-agent']),
     });
 
     const userObj = user.toJSON();
@@ -147,6 +195,20 @@ const logout = async (req, res) => {
     if (refreshToken) {
       await User.findByIdAndUpdate(req.user._id, { $pull: { refreshTokens: refreshToken } });
     }
+    
+    // Log session duration inside LoginLog
+    if (req.user && req.user._id) {
+      const latestLog = await LoginLog.findOne({ userId: req.user._id, status: 'success', logoutTime: null }).sort({ loginTime: -1 });
+      if (latestLog) {
+        const logoutTime = new Date();
+        const sessionDuration = Math.round((logoutTime - latestLog.loginTime) / 1000);
+        await LoginLog.findByIdAndUpdate(latestLog._id, {
+          logoutTime,
+          sessionDuration,
+        });
+      }
+    }
+
     await logActivity(req, 'logout');
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
@@ -270,7 +332,7 @@ const changePassword = async (req, res) => {
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, department, adminCode } = req.body;
+    const { name, email, password, role, department, adminCode, companyName, mobile } = req.body;
     if (!name || !email || !password || !role) {
       return res.status(400).json({ success: false, message: 'All fields (name, email, password, role) are required' });
     }
@@ -288,6 +350,8 @@ const register = async (req, res) => {
       role,
       department: role === 'employee' ? department : undefined,
       adminCode: role === 'admin' ? adminCode?.toUpperCase() : undefined,
+      companyName: role === 'client' ? companyName : undefined,
+      mobile: mobile || undefined,
       isActive: true
     });
 

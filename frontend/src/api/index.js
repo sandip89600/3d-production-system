@@ -71,6 +71,7 @@ export const analyticsAPI = {
   getActivityLogs: (params) => api.get('/analytics/activity-logs', { params }),
   getAdminDashboard: () => api.get('/analytics/admin-dashboard'),
   getEmployeeDashboard: () => api.get('/analytics/employee-dashboard'),
+  getClientDashboard: () => api.get('/analytics/client-dashboard'),
   getNotifications: (params) => api.get('/analytics/notifications', { params }),
   markNotificationRead: (id) => api.put(`/analytics/notifications/${id}/read`),
   markAllNotificationsRead: () => api.put('/analytics/notifications/read-all'),

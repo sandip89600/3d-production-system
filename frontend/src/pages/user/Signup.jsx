@@ -1,24 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff, Lock, Mail, User, Briefcase, Boxes, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Briefcase, Boxes, ArrowRight, ArrowLeft, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Signup() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', category: 'Real Estate Developer' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    companyName: '',
+    mobile: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const clientCategories = [
-    'Real Estate Developer',
-    'Architecture Firm',
-    'Interior Designer',
-    '3D Visualization Client',
-    'Independent Designer'
-  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,20 +36,17 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      // Register client. Because the internal DB roles are superadmin/admin/employee,
-      // we sign them up as a client employee by default or register client records.
-      // We will assign a default role of 'employee' for database compatibility.
       const result = await register({
         name: form.name,
         email: form.email,
         password: form.password,
-        role: 'employee',
-        // In case the DB requires a department, we pass a general tag or leave it undefined.
-        department: undefined,
+        role: 'client',
+        companyName: form.companyName,
+        mobile: form.mobile,
       });
 
       toast.success('Registration successful! Welcome to All 3D Studio.');
-      navigate('/profile');
+      navigate('/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed. Please try a different email.';
       toast.error(msg);
@@ -130,22 +126,35 @@ export default function Signup() {
               </div>
             </div>
 
-            {/* Client Category */}
+            {/* Company Name */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-400">Company Type</label>
+              <label className="text-xs font-semibold text-slate-400">Company Name</label>
               <div className="relative">
                 <Briefcase className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <select
-                  value={form.category}
-                  onChange={e => setForm({ ...form, category: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors cursor-pointer"
-                >
-                  {clientCategories.map(cat => (
-                    <option key={cat} value={cat} className="bg-slate-950 text-slate-200">
-                      {cat}
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Miller Visualization Studio"
+                  value={form.companyName}
+                  onChange={e => setForm({ ...form, companyName: e.target.value })}
+                  className="w-full bg-slate-900/40 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Mobile Number */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-slate-400">Mobile Number</label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. +91 98765 43210"
+                  value={form.mobile}
+                  onChange={e => setForm({ ...form, mobile: e.target.value })}
+                  className="w-full bg-slate-900/40 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-colors"
+                />
               </div>
             </div>
 

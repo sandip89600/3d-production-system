@@ -31,6 +31,14 @@ export default function AdminDashboard() {
         <StatsCard title="Delayed" value={stats.delayed} icon={AlertTriangle} color="red" />
       </div>
 
+      {/* Client Scope Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatsCard title="Total Clients" value={data?.clientStats?.totalClients} icon={Users} color="cyan" />
+        <StatsCard title="Active Clients" value={data?.clientStats?.activeClients} icon={CheckCircle2} color="indigo" />
+        <StatsCard title="Client Uploads" value={data?.clientStats?.clientUploadCount} icon={Upload} color="amber" />
+        <StatsCard title="Client Projects" value={data?.clientStats?.clientProjectCount} icon={FolderKanban} color="pink" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pending Reviews */}
         <div className="glass-card p-6">
@@ -122,6 +130,50 @@ export default function AdminDashboard() {
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Scoped Client Activity Grids */}
+      <div className="glass-card p-6 mt-6">
+        <h3 className="text-white font-semibold mb-1">Recent Client Activity</h3>
+        <p className="text-slate-400 text-xs mb-4">Latest uploads from visualization clients</p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left border-b border-white/5">
+                <th className="text-slate-400 font-medium pb-3 pr-4">Client</th>
+                <th className="text-slate-400 font-medium pb-3 pr-4">Project</th>
+                <th className="text-slate-400 font-medium pb-3 pr-4">File Name</th>
+                <th className="text-slate-400 font-medium pb-3 pr-4">Size</th>
+                <th className="text-slate-400 font-medium pb-3">Uploaded At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data?.clientActivity || []).map((log, i) => (
+                <tr key={i} className="table-row text-xs">
+                  <td className="py-3 pr-4">
+                    <p className="text-white font-medium">{log.userId?.name}</p>
+                    <p className="text-slate-500">{log.userId?.companyName || '—'}</p>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <span className="text-slate-300">{log.projectId?.name || '—'}</span>
+                  </td>
+                  <td className="py-3 pr-4">
+                    <span className="text-amber-400 font-mono">{log.fileId?.originalName || '—'}</span>
+                  </td>
+                  <td className="py-3 pr-4 text-slate-400">
+                    {log.fileId?.fileSize ? `${(log.fileId.fileSize / (1024 * 1024)).toFixed(2)} MB` : '—'}
+                  </td>
+                  <td className="py-3 text-slate-400">
+                    {log.uploadedAt ? format(new Date(log.uploadedAt), 'dd MMM hh:mm a') : '—'}
+                  </td>
+                </tr>
+              ))}
+              {!data?.clientActivity?.length && (
+                <tr><td colSpan={5} className="py-8 text-center text-slate-500">No client uploads tracked yet</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </Layout>
