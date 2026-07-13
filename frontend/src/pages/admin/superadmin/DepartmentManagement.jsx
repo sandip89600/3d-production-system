@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { departmentsAPI, usersAPI } from '../../api';
-import Layout from '../../components/Layout';
+import { departmentsAPI, usersAPI } from '../../../api';
+import Layout from '../../../components/Layout';
 import { Plus, X, Building2, Users, MessageSquare, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 

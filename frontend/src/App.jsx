@@ -5,34 +5,34 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 
-// Public Studio Site Components & Pages
+// Public Studio Site Components & Pages (User Facing)
 import Layout from './components/public/Layout';
-import Home from './pages/public/Home';
-import About from './pages/public/About';
-import Portfolio from './pages/public/Portfolio';
-import Blog from './pages/public/Blog';
-import Contact from './pages/public/Contact';
-import Login from './pages/public/Login';
-import Signup from './pages/public/Signup';
-import ForgotPassword from './pages/public/ForgotPassword';
-import ResetPassword from './pages/public/ResetPassword';
+import Home from './pages/user/Home';
+import About from './pages/user/About';
+import Portfolio from './pages/user/Portfolio';
+import Blog from './pages/user/Blog';
+import Contact from './pages/user/Contact';
+import Login from './pages/user/Login';
+import Signup from './pages/user/Signup';
+import ForgotPassword from './pages/user/ForgotPassword';
+import ResetPassword from './pages/user/ResetPassword';
 
-// Auth
-import LoginPage from './pages/auth/LoginPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import VerifyOTPPage from './pages/auth/VerifyOTPPage';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import ResetSuccessPage from './pages/auth/ResetSuccessPage';
+// Internal Staff Auth (Admin Portal)
+import LoginPage from './pages/admin/auth/LoginPage';
+import ForgotPasswordPage from './pages/admin/auth/ForgotPasswordPage';
+import VerifyOTPPage from './pages/admin/auth/VerifyOTPPage';
+import ResetPasswordPage from './pages/admin/auth/ResetPasswordPage';
+import ResetSuccessPage from './pages/admin/auth/ResetSuccessPage';
 
-// Super Admin
-import SuperAdminDashboard from './pages/superadmin/Dashboard';
-import AdminManagement from './pages/superadmin/AdminManagement';
-import DepartmentManagement from './pages/superadmin/DepartmentManagement';
-import AllProjects from './pages/superadmin/AllProjects';
-import SecurityLogs from './pages/superadmin/SecurityLogs';
-import Analytics from './pages/superadmin/Analytics';
+// Super Admin Dashboards
+import SuperAdminDashboard from './pages/admin/superadmin/Dashboard';
+import AdminManagement from './pages/admin/superadmin/AdminManagement';
+import DepartmentManagement from './pages/admin/superadmin/DepartmentManagement';
+import AllProjects from './pages/admin/superadmin/AllProjects';
+import SecurityLogs from './pages/admin/superadmin/SecurityLogs';
+import Analytics from './pages/admin/superadmin/Analytics';
 
-// Admin
+// Admin Dashboards
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ProjectUpload from './pages/admin/ProjectUpload';
 import ProjectManagement from './pages/admin/ProjectManagement';
@@ -40,14 +40,14 @@ import ReviewCenter from './pages/admin/ReviewCenter';
 import EmployeeMonitor from './pages/admin/EmployeeMonitor';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 
-// Employee
-import EmployeeDashboard from './pages/employee/EmployeeDashboard';
-import AvailableProjects from './pages/employee/AvailableProjects';
-import MyProjects from './pages/employee/MyProjects';
-import NotificationCenter from './pages/employee/NotificationCenter';
-import DownloadProjectPage from './pages/employee/DownloadProjectPage';
+// Employee Dashboards
+import EmployeeDashboard from './pages/admin/employee/EmployeeDashboard';
+import AvailableProjects from './pages/admin/employee/AvailableProjects';
+import MyProjects from './pages/admin/employee/MyProjects';
+import NotificationCenter from './pages/admin/employee/NotificationCenter';
+import DownloadProjectPage from './pages/admin/employee/DownloadProjectPage';
 
-// Profile Page
+// Profile Page (Shared Portal Profile)
 import ProfilePage from './pages/ProfilePage';
 
 const queryClient = new QueryClient({

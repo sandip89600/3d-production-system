@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { usersAPI, departmentsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import { ProgressBar } from '../../components/Badges';
+import { usersAPI, departmentsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import { ProgressBar } from '../../../components/Badges';
 import { Plus, X, Search, Power, User, Mail, Hash, Trash2, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -27,9 +27,9 @@ export default function AdminManagement() {
     queryKey: ['performance', activeRole],
     queryFn: () => {
       if (activeRole === 'admin') {
-        return import('../../api').then(m => m.analyticsAPI.getAdminPerformance()).then(r => r.data);
+        return import('../../../api').then(m => m.analyticsAPI.getAdminPerformance()).then(r => r.data);
       } else {
-        return import('../../api').then(m => m.analyticsAPI.getEmployeePerformance()).then(r => r.data);
+        return import('../../../api').then(m => m.analyticsAPI.getEmployeePerformance()).then(r => r.data);
       }
     },
   });

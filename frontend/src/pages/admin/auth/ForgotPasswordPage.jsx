@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Phone, KeyRound, ChevronLeft, Shield } from 'lucide-react';
-import { authAPI } from '../../api';
+import { authAPI } from '../../../api';
 import toast from 'react-hot-toast';
 
 export default function ForgotPasswordPage() {

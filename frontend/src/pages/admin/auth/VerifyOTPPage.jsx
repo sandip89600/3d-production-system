@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft, RefreshCw } from 'lucide-react';
-import { authAPI } from '../../api';
+import { authAPI } from '../../../api';
 import toast from 'react-hot-toast';
 
 export default function VerifyOTPPage() {

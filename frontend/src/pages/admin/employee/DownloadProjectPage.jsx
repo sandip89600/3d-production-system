@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { projectsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import { StatusBadge, PriorityBadge } from '../../components/Badges';
+import { projectsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import { StatusBadge, PriorityBadge } from '../../../components/Badges';
 import { Download, FileArchive, Clock, Calendar, CheckSquare, Shield, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';

@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { analyticsAPI, projectsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import { StatusBadge, PriorityBadge, ProgressBar } from '../../components/Badges';
+import { analyticsAPI, projectsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import { StatusBadge, PriorityBadge, ProgressBar } from '../../../components/Badges';
 import { Send, Upload, FileText, TrendingUp, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';

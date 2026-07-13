@@ -1,13 +1,13 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import StatsCard from '../../components/StatsCard';
-import { StatusBadge, PriorityBadge, ProgressBar } from '../../components/Badges';
+import { analyticsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import StatsCard from '../../../components/StatsCard';
+import { StatusBadge, PriorityBadge, ProgressBar } from '../../../components/Badges';
 import { FolderKanban, CheckCircle2, Activity, ClipboardList, ArrowRight } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();

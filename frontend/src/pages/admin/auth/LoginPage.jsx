@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { Eye, EyeOff, Boxes, Shield, Zap, Lock } from 'lucide-react';
-import { departmentsAPI, authAPI } from '../../api';
+import { departmentsAPI, authAPI } from '../../../api';
 import toast from 'react-hot-toast';
 
 const roleRedirects = {

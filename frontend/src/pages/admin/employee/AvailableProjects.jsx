@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { projectsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import { StatusBadge, PriorityBadge, ProgressBar } from '../../components/Badges';
+import { projectsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import { StatusBadge, PriorityBadge, ProgressBar } from '../../../components/Badges';
 import { Search, Layers, Calendar, User, Download, CheckCircle } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import toast from 'react-hot-toast';

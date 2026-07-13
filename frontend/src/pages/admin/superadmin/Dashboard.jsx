@@ -1,9 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import StatsCard from '../../components/StatsCard';
-import { StatusBadge, PriorityBadge, ProgressBar } from '../../components/Badges';
+import { analyticsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import StatsCard from '../../../components/StatsCard';
+import { StatusBadge, PriorityBadge, ProgressBar } from '../../../components/Badges';
 import {
   FolderKanban, Users, Building2, CheckCircle2, Clock, AlertTriangle,
   TrendingUp, Activity, Layers, Zap,

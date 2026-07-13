@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsAPI } from '../../api';
-import Layout from '../../components/Layout';
+import { analyticsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
 import { Activity, Shield, User, Clock, CheckCircle, XCircle, Search } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { analyticsAPI } from '../../api';
-import Layout from '../../components/Layout';
-import { ProgressBar } from '../../components/Badges';
+import { analyticsAPI } from '../../../api';
+import Layout from '../../../components/Layout';
+import { ProgressBar } from '../../../components/Badges';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
