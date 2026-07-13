@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, RefreshCw } from 'lucide-react';
+import { Bell, Search, RefreshCw, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { analyticsAPI } from '../api';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 
-export default function TopBar({ title, subtitle }) {
+export default function TopBar({ title, subtitle, onToggleMobileSidebar }) {
   const { user, socket } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -72,11 +72,19 @@ export default function TopBar({ title, subtitle }) {
   };
 
   return (
-    <header className="h-16 bg-dark-900/80 backdrop-blur-sm border-b border-white/5 flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-20">
-      {/* Title */}
-      <div>
-        <h1 className="text-white font-bold text-lg leading-tight">{title}</h1>
-        {subtitle && <p className="text-slate-400 text-xs">{subtitle}</p>}
+    <header className="h-16 bg-dark-900/80 backdrop-blur-sm border-b border-white/5 flex items-center justify-between px-4 md:px-6 flex-shrink-0 sticky top-0 z-20">
+      {/* Left section: Toggle + Title */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onToggleMobileSidebar}
+          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all md:hidden"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div>
+          <h1 className="text-white font-bold text-base md:text-lg leading-tight truncate max-w-[180px] sm:max-w-xs md:max-w-md">{title}</h1>
+          {subtitle && <p className="text-slate-400 text-[10px] md:text-xs truncate max-w-[180px] sm:max-w-xs md:max-w-md">{subtitle}</p>}
+        </div>
       </div>
 
       {/* Right actions */}
