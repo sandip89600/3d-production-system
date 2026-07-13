@@ -98,7 +98,9 @@ export default function Layout() {
                       ? '/superadmin/dashboard'
                       : user.role === 'admin'
                       ? '/admin/dashboard'
-                      : '/employee/dashboard'
+                      : user.role === 'employee'
+                      ? '/employee/dashboard'
+                      : '/client/dashboard'
                   }
                   className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-lg hover:text-white hover:border-slate-700 transition-colors"
                 >
@@ -169,7 +171,9 @@ export default function Layout() {
                       ? '/superadmin/dashboard'
                       : user.role === 'admin'
                       ? '/admin/dashboard'
-                      : '/employee/dashboard'
+                      : user.role === 'employee'
+                      ? '/employee/dashboard'
+                      : '/client/dashboard'
                   }
                   className="w-full text-center text-sm bg-slate-900 border border-slate-800 py-3 rounded-xl font-medium"
                 >

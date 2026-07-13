@@ -6,6 +6,14 @@ const roleRedirects = {
   superadmin: '/superadmin/dashboard',
   admin: '/admin/dashboard',
   employee: '/employee/dashboard',
+  client: '/client/dashboard',
+};
+
+const getRedirectPath = (path) => {
+  if (path.startsWith('/client') || path.startsWith('/dashboard')) return '/login';
+  if (path.startsWith('/superadmin')) return '/superadmin/login';
+  if (path.startsWith('/employee')) return '/employee/login';
+  return '/admin/login';
 };
 
 export const ProtectedRoute = ({ children, roles }) => {
@@ -24,11 +32,11 @@ export const ProtectedRoute = ({ children, roles }) => {
   }
 
   if (!user) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    return <Navigate to={getRedirectPath(location.pathname)} state={{ from: location }} replace />;
   }
 
   if (roles && !roles.includes(user.role)) {
-    return <Navigate to={roleRedirects[user.role] || '/admin/login'} replace />;
+    return <Navigate to={roleRedirects[user.role] || getRedirectPath(location.pathname)} replace />;
   }
 
   return children;
@@ -38,7 +46,7 @@ export const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) {
-    return <Navigate to={roleRedirects[user.role] || '/admin/login'} replace />;
+    return <Navigate to={roleRedirects[user.role] || '/client/dashboard'} replace />;
   }
   return children;
 };

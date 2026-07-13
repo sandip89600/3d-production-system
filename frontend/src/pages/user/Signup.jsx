@@ -46,7 +46,7 @@ export default function Signup() {
       });
 
       toast.success('Registration successful! Welcome to All 3D Studio.');
-      navigate('/dashboard');
+      navigate('/client/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed. Please try a different email.';
       toast.error(msg);

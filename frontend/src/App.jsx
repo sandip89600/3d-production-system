@@ -82,8 +82,10 @@ function App() {
             <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
-            {/* Internal Staff Auth */}
-            <Route path="/admin/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+            {/* Dedicated Staff Auth Portals */}
+            <Route path="/employee/login" element={<PublicRoute><LoginPage portalRole="employee" /></PublicRoute>} />
+            <Route path="/admin/login" element={<PublicRoute><LoginPage portalRole="admin" /></PublicRoute>} />
+            <Route path="/superadmin/login" element={<PublicRoute><LoginPage portalRole="superadmin" /></PublicRoute>} />
             <Route path="/admin/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
             <Route path="/admin/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
             <Route path="/admin/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
@@ -94,7 +96,7 @@ function App() {
             <Route path="/download-project/:id" element={<ProtectedRoute><DownloadProjectPage /></ProtectedRoute>} />
             
             {/* Client (User) Protected Dashboard */}
-            <Route path="/dashboard" element={<ProtectedRoute roles={['client']}><UserDashboard /></ProtectedRoute>} />
+            <Route path="/client/dashboard" element={<ProtectedRoute roles={['client']}><UserDashboard /></ProtectedRoute>} />
 
             {/* Super Admin */}
             <Route path="/superadmin/dashboard" element={<ProtectedRoute roles={['superadmin', 'admin']}><SuperAdminDashboard /></ProtectedRoute>} />

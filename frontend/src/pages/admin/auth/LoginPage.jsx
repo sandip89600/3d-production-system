@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { Eye, EyeOff, Boxes, Shield, Zap, Lock } from 'lucide-react';
-import { departmentsAPI, authAPI } from '../../../api';
 import toast from 'react-hot-toast';
 
 const roleRedirects = {
@@ -11,51 +10,35 @@ const roleRedirects = {
   employee: '/employee/dashboard',
 };
 
-export default function LoginPage() {
-  const { login, register } = useAuth();
+const portalDetails = {
+  superadmin: {
+    title: 'Super Admin Portal',
+    subtitle: 'Owners & Founders workspace control',
+    accentColor: 'from-purple-500 to-indigo-600',
+  },
+  admin: {
+    title: 'Admin Portal',
+    subtitle: 'Project management & team monitor panel',
+    accentColor: 'from-blue-500 to-indigo-600',
+  },
+  employee: {
+    title: 'Employee Portal',
+    subtitle: 'Production queue & assets pick center',
+    accentColor: 'from-emerald-500 to-teal-600',
+  },
+};
+
+export default function LoginPage({ portalRole = 'employee' }) {
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isRegistering, setIsRegistering] = useState(false);
+
   const [form, setForm] = useState({ email: '', password: '' });
   const [twoFA, setTwoFA] = useState({ required: false, token: '000000' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
 
-  const handleForgotPasswordSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { data } = await authAPI.forgotPassword(forgotEmail);
-      toast.success(data.message || 'Reset link logged to the console!');
-      setForgotEmail('');
-      setForgotPasswordMode(false);
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to request password reset';
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const [departments, setDepartments] = useState([]);
-  const [regForm, setRegForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'employee',
-    department: '',
-    adminCode: '',
-  });
-
-  useEffect(() => {
-    if (isRegistering) {
-      departmentsAPI.getPublic()
-        .then(({ data }) => setDepartments(data.departments || []))
-        .catch(() => toast.error('Failed to load departments'));
-    }
-  }, [isRegistering]);
+  const details = portalDetails[portalRole] || portalDetails.employee;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,8 +49,18 @@ export default function LoginPage() {
         setTwoFA(t => ({ ...t, required: true }));
         toast('Enter your 2FA code', { icon: '🔐' });
       } else {
+        const userRole = result.user?.role;
+        
+        // Enforce Portal Role Boundaries
+        if (userRole !== portalRole) {
+          await logout();
+          toast.error(`Invalid login. This portal is for ${details.title} users only.`);
+          setLoading(false);
+          return;
+        }
+
         toast.success(`Welcome back, ${result.user?.name?.split(' ')[0]}! 👋`);
-        const fromPath = location.state?.from?.pathname || roleRedirects[result.user?.role] || '/';
+        const fromPath = location.state?.from?.pathname || roleRedirects[userRole] || '/';
         navigate(fromPath, { replace: true });
       }
     } catch (err) {
@@ -77,43 +70,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (regForm.role === 'employee' && !regForm.department) {
-        toast.error('Please select a department');
-        setLoading(false);
-        return;
-      }
-      if (regForm.role === 'admin' && !regForm.adminCode) {
-        toast.error('Please provide an Admin Code');
-        setLoading(false);
-        return;
-      }
-
-      const result = await register({
-        name: regForm.name,
-        email: regForm.email,
-        password: regForm.password,
-        role: regForm.role,
-        department: regForm.role === 'employee' ? regForm.department : undefined,
-        adminCode: regForm.role === 'admin' ? regForm.adminCode : undefined,
-      });
-
-      toast.success('Registration successful! Welcome to the studio. 🎉');
-      const fromPath = location.state?.from?.pathname || roleRedirects[result.user?.role] || '/';
-      navigate(fromPath, { replace: true });
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed. Try again.';
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
 
   return (
     <div className="min-h-screen bg-dark-950 flex animate-fade-in">
@@ -132,15 +88,15 @@ export default function LoginPage() {
         }} />
 
         <div className="relative flex flex-col justify-center items-center h-full p-12 text-center">
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-8">
+          <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${details.accentColor} flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-8`}>
             <Boxes className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
             All3DStudio<br />
-            <span className="gradient-text">Management System</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{details.title}</span>
           </h1>
           <p className="text-slate-400 text-lg mb-12 max-w-md leading-relaxed">
-            Enterprise-grade project management for professional All3DStudio artists
+            {details.subtitle}
           </p>
 
           <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
@@ -168,232 +124,102 @@ export default function LoginPage() {
         <div className="max-w-sm w-full mx-auto">
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-6 lg:hidden">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${details.accentColor} flex items-center justify-center`}>
                 <Boxes className="w-5 h-5 text-white" />
               </div>
               <span className="text-white font-bold">All3DStudio</span>
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">
-              {isRegistering ? 'Create an Account' : 'Welcome back'}
+              Welcome back
             </h2>
-            <p className="text-slate-400 text-sm">
-              {isRegistering ? 'Join the All3DStudio team today' : 'Sign in to your account to continue'}
+            <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+              Sign in to the <span className="font-semibold text-blue-400 capitalize">{portalRole}</span> workspace. Self-registration is disabled for security.
             </p>
           </div>
 
-          {!isRegistering ? (
-            <>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                    {!twoFA.required ? (
-                      <>
-                        <div>
-                          <label className="label">Email Address</label>
-                          <input
-                            type="email"
-                            className="input"
-                            placeholder="you@all3dstudio.com"
-                            value={form.email}
-                            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="label mb-0">Password</label>
-                            <button
-                              type="button"
-                              onClick={() => navigate('/admin/forgot-password')}
-                              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                            >
-                              Forgot Password?
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <input
-                              type={showPassword ? 'text' : 'password'}
-                              className="input pr-12"
-                              placeholder="••••••••"
-                              value={form.password}
-                              onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                              required
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(s => !s)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                            >
-                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div>
-                        <div className="glass-card p-4 mb-4 text-center">
-                          <div className="text-3xl mb-2">🔐</div>
-                          <p className="text-white font-semibold text-sm">Two-Factor Authentication</p>
-                          <p className="text-slate-400 text-xs mt-1">Enter the 6-digit code from your authenticator app</p>
-                        </div>
-                        <label className="label">2FA Code</label>
-                        <input
-                          type="text"
-                          className="input text-center text-2xl tracking-widest"
-                          placeholder="000 000"
-                          maxLength={6}
-                          value={twoFA.token}
-                          onChange={e => setTwoFA(t => ({ ...t, token: e.target.value.replace(/\D/g, '') }))}
-                          required
-                          autoFocus
-                        />
-                        <button type="button" onClick={() => setTwoFA({ required: false, token: '' })} className="text-slate-400 hover:text-white text-xs mt-2 transition-colors">
-                          ← Back to login
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        twoFA.required ? 'Verify & Sign In' : 'Sign In'
-                      )}
-                    </button>
-                  </form>
-
-                  <div className="text-center mt-4">
-                    <p className="text-slate-400 text-xs">
-                      Don't have an account?{' '}
-                      <button
-                        type="button"
-                        onClick={() => setIsRegistering(true)}
-                        className="text-blue-400 hover:text-blue-300 font-semibold hover:underline"
-                      >
-                        Create Account
-                      </button>
-                    </p>
-                  </div>
-
-
-            </>
-          ) : (
-            <>
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label className="label">Full Name</label>
-                  <input
-                    type="text"
-                    className="input"
-                    placeholder="John Doe"
-                    value={regForm.name}
-                    onChange={e => setRegForm(rf => ({ ...rf, name: e.target.value }))}
-                    required
-                  />
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!twoFA.required ? (
+              <>
                 <div>
                   <label className="label">Email Address</label>
                   <input
                     type="email"
                     className="input"
-                    placeholder="you@3dprod.com"
-                    value={regForm.email}
-                    onChange={e => setRegForm(rf => ({ ...rf, email: e.target.value }))}
+                    placeholder="you@all3dstudio.com"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                     required
                   />
                 </div>
                 <div>
-                  <label className="label">Password</label>
-                  <input
-                    type="password"
-                    className="input"
-                    placeholder="••••••••"
-                    value={regForm.password}
-                    onChange={e => setRegForm(rf => ({ ...rf, password: e.target.value }))}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <div>
-                  <label className="label">Role</label>
-                  <select
-                    className="input"
-                    value={regForm.role}
-                    onChange={e => setRegForm(rf => ({ ...rf, role: e.target.value }))}
-                    required
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                {regForm.role === 'employee' ? (
-                  <div>
-                    <label className="label">Department</label>
-                    <select
-                      className="input"
-                      value={regForm.department}
-                      onChange={e => setRegForm(rf => ({ ...rf, department: e.target.value }))}
-                      required
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label mb-0">Password</label>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/admin/forgot-password')}
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                     >
-                      <option value="">Select a Department</option>
-                      {departments.map(dept => (
-                        <option key={dept._id} value={dept._id}>
-                          {dept.name} ({dept.code})
-                        </option>
-                      ))}
-                    </select>
+                      Forgot Password?
+                    </button>
                   </div>
-                ) : (
-                  <div>
-                    <label className="label">Admin Code</label>
+                  <div className="relative">
                     <input
-                      type="text"
-                      className="input uppercase"
-                      placeholder="e.g. ROH"
-                      maxLength={3}
-                      value={regForm.adminCode}
-                      onChange={e => setRegForm(rf => ({ ...rf, adminCode: e.target.value.toUpperCase() }))}
+                      type={showPassword ? 'text' : 'password'}
+                      className="input pr-12"
+                      placeholder="••••••••"
+                      value={form.password}
+                      onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(s => !s)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Registering...
-                    </>
-                  ) : (
-                    'Register & Join'
-                  )}
+                </div>
+              </>
+            ) : (
+              <div>
+                <div className="glass-card p-4 mb-4 text-center">
+                  <div className="text-3xl mb-2">🔐</div>
+                  <p className="text-white font-semibold text-sm">Two-Factor Authentication</p>
+                  <p className="text-slate-400 text-xs mt-1">Enter the 6-digit code from your authenticator app</p>
+                </div>
+                <label className="label">2FA Code</label>
+                <input
+                  type="text"
+                  className="input text-center text-2xl tracking-widest"
+                  placeholder="000 000"
+                  maxLength={6}
+                  value={twoFA.token}
+                  onChange={e => setTwoFA(t => ({ ...t, token: e.target.value.replace(/\D/g, '') }))}
+                  required
+                  autoFocus
+                />
+                <button type="button" onClick={() => setTwoFA({ required: false, token: '' })} className="text-slate-400 hover:text-white text-xs mt-2 transition-colors">
+                  ← Back to login
                 </button>
-              </form>
-
-              <div className="text-center mt-4">
-                <p className="text-slate-400 text-xs">
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setIsRegistering(false)}
-                    className="text-blue-400 hover:text-blue-300 font-semibold hover:underline"
-                  >
-                    Sign In
-                  </button>
-                </p>
               </div>
-            </>
-          )}
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                twoFA.required ? 'Verify & Sign In' : 'Sign In'
+              )}
+            </button>
+          </form>
         </div>
       </div>
     </div>

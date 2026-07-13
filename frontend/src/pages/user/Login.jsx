@@ -12,7 +12,7 @@ const roleRedirects = {
 };
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -31,8 +31,17 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await login(form.email, form.password);
+      const userRole = result.user?.role;
+
+      if (userRole !== 'client') {
+        await logout();
+        toast.error(`Staff detected. Please login at the dedicated /${userRole}/login portal.`);
+        setLoading(false);
+        return;
+      }
+
       toast.success(`Welcome back, ${result.user?.name?.split(' ')[0] || 'User'}! 👋`);
-      const fromPath = location.state?.from?.pathname || roleRedirects[result.user?.role] || '/profile';
+      const fromPath = location.state?.from?.pathname || '/client/dashboard';
       navigate(fromPath, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Please verify credentials.';
