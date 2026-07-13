@@ -12,7 +12,14 @@
   --color-dark-800: #1e293b;
   --color-dark-850: #172032;
   --color-dark-900: #0f172a;
-  --color-dark-950: #0a0f1e;
+  --color-dark-950: #020617;
+
+  /* Luxury Brand Palette */
+  --color-primary-luxury: #0f172a;
+  --color-accent-luxury: #f59e0b;
+  --color-secondary-luxury: #1e293b;
+  --color-bg-luxury: #020617;
+  --color-text-luxury: #f8fafc;
 
   /* Animations */
   --animate-fade-in: fadeIn 0.3s ease-in-out;
@@ -41,6 +48,11 @@
     from { transform: translateX(-100%); opacity: 0; }
     to   { transform: translateX(0); opacity: 1; }
   }
+  @keyframes pan {
+    from { transform: scale(1) translate(0, 0); }
+    to   { transform: scale(1.1) translate(-1.5%, -0.5%); }
+  }
+  --animate-pan: pan 25s infinite alternate ease-in-out;
 }
 
 /* ─── Base ────────────────────────────────────────── */

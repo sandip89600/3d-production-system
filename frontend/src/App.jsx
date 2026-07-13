@@ -5,6 +5,18 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 
+// Public Studio Site Components & Pages
+import Layout from './components/public/Layout';
+import Home from './pages/public/Home';
+import About from './pages/public/About';
+import Portfolio from './pages/public/Portfolio';
+import Blog from './pages/public/Blog';
+import Contact from './pages/public/Contact';
+import Login from './pages/public/Login';
+import Signup from './pages/public/Signup';
+import ForgotPassword from './pages/public/ForgotPassword';
+import ResetPassword from './pages/public/ResetPassword';
+
 // Auth
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
@@ -54,7 +66,22 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public */}
+            {/* Public Brand Site Pages */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/contact" element={<Contact />} />
+            </Route>
+
+            {/* Public Brand Auth Pages */}
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+            <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+            <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+
+            {/* Internal Staff Auth */}
             <Route path="/admin/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/admin/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
             <Route path="/admin/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
@@ -88,8 +115,7 @@ function App() {
             <Route path="/employee/notifications" element={<ProtectedRoute roles={['employee']}><NotificationCenter /></ProtectedRoute>} />
 
             {/* Fallback */}
-            <Route path="/" element={<Navigate to="/admin/login" replace />} />
-            <Route path="*" element={<Navigate to="/admin/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
 
