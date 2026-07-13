@@ -64,7 +64,7 @@ export default function Sidebar({ mobileSidebarOpen, setMobileSidebarOpen }) {
   const handleLogout = async () => {
     await logout();
     if (setMobileSidebarOpen) setMobileSidebarOpen(false);
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   return (

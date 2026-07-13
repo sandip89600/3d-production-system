@@ -55,11 +55,11 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* Public */}
-            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-            <Route path="/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
-            <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-            <Route path="/reset-success" element={<PublicRoute><ResetSuccessPage /></PublicRoute>} />
+            <Route path="/admin/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+            <Route path="/admin/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+            <Route path="/admin/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
+            <Route path="/admin/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+            <Route path="/admin/reset-success" element={<PublicRoute><ResetSuccessPage /></PublicRoute>} />
 
             {/* Shared Protected Profile */}
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
@@ -88,8 +88,8 @@ function App() {
             <Route path="/employee/notifications" element={<ProtectedRoute roles={['employee']}><NotificationCenter /></ProtectedRoute>} />
 
             {/* Fallback */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Navigate to="/admin/login" replace />} />
+            <Route path="*" element={<Navigate to="/admin/login" replace />} />
           </Routes>
         </BrowserRouter>
 

@@ -21,11 +21,11 @@ export default function ForgotPasswordPage() {
       if (resetMethod === 'email') {
         const { data } = await authAPI.forgotPasswordEmail(inputValue.trim());
         toast.success(data.message || 'OTP sent successfully!');
-        navigate('/verify-otp', { state: { target: inputValue.trim(), type: 'email' } });
+        navigate('/admin/verify-otp', { state: { target: inputValue.trim(), type: 'email' } });
       } else {
         const { data } = await authAPI.forgotPasswordMobile(inputValue.trim());
         toast.success(data.message || 'OTP sent successfully!');
-        navigate('/verify-otp', { state: { target: inputValue.trim(), type: 'mobile' } });
+        navigate('/admin/verify-otp', { state: { target: inputValue.trim(), type: 'mobile' } });
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to send OTP. Please check your input.';
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
 
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/admin/login')}
             className="flex items-center justify-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mx-auto"
           >
             <ChevronLeft className="w-4 h-4" />

@@ -34,7 +34,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
           localStorage.clear();
-          window.location.href = '/login';
+          window.location.href = '/admin/login';
         }
         return Promise.reject(refreshError);
       }

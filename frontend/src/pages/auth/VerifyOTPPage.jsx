@@ -21,7 +21,7 @@ export default function VerifyOTPPage() {
   useEffect(() => {
     if (!target) {
       toast.error('Session expired. Please request a new OTP.');
-      navigate('/forgot-password');
+      navigate('/admin/forgot-password');
     }
   }, [target, navigate]);
 
@@ -137,7 +137,7 @@ export default function VerifyOTPPage() {
       const { data } = await authAPI.verifyOTP(target, otpString);
       toast.success('OTP verified successfully!');
       // Navigate to reset password page and pass the token in location state
-      navigate('/reset-password', { state: { resetToken: data.resetToken } });
+      navigate('/admin/reset-password', { state: { resetToken: data.resetToken } });
     } catch (err) {
       const msg = err.response?.data?.message || 'Verification failed. Try again.';
       toast.error(msg);
@@ -224,7 +224,7 @@ export default function VerifyOTPPage() {
 
             <button
               type="button"
-              onClick={() => navigate('/forgot-password')}
+              onClick={() => navigate('/admin/forgot-password')}
               className="flex items-center gap-1 text-slate-400 hover:text-white text-sm transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />

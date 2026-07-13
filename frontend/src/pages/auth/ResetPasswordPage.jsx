@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
     try {
       const { data } = await authAPI.resetPassword({ token, password });
       toast.success(data.message || 'Password changed successfully!');
-      navigate('/reset-success');
+      navigate('/admin/reset-success');
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to reset password. The link or token may have expired.';
       toast.error(msg);
@@ -77,7 +77,7 @@ export default function ResetPasswordPage() {
             <p className="text-slate-400 text-xs mb-4">The password reset token is missing. Please start the forgot password recovery process again.</p>
             <button
               type="button"
-              onClick={() => navigate('/forgot-password')}
+              onClick={() => navigate('/admin/forgot-password')}
               className="btn-secondary w-full"
             >
               Start Recovery Over
@@ -160,7 +160,7 @@ export default function ResetPasswordPage() {
             
             <button
               type="button"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/admin/login')}
               className="text-slate-400 hover:text-white text-xs mt-2 transition-colors block text-center w-full"
             >
               Cancel and go to Login

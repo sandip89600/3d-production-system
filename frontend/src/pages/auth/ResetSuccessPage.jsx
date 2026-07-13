@@ -23,7 +23,7 @@ export default function ResetSuccessPage() {
         </p>
 
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/admin/login')}
           className="btn-primary w-full flex items-center justify-center gap-2 py-3"
         >
           Proceed to Login

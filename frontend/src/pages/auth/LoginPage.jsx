@@ -202,7 +202,7 @@ export default function LoginPage() {
                             <label className="label mb-0">Password</label>
                             <button
                               type="button"
-                              onClick={() => navigate('/forgot-password')}
+                              onClick={() => navigate('/admin/forgot-password')}
                               className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                             >
                               Forgot Password?
