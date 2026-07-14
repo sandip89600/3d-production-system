@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../api';
 import { io } from 'socket.io-client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext(null);
 
@@ -8,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
+  const queryClient = useQueryClient();
 
   const connectSocket = useCallback((userId) => {
     const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
@@ -45,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, twoFactorToken) => {
     const { data } = await authAPI.login({ email, password, twoFactorToken });
     if (data.requires2FA) return { requires2FA: true };
+    queryClient.clear();
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
@@ -54,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (registerData) => {
     const { data } = await authAPI.register(registerData);
+    queryClient.clear();
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
@@ -66,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       const refreshToken = localStorage.getItem('refreshToken');
       await authAPI.logout(refreshToken);
     } catch {}
+    queryClient.clear();
     localStorage.clear();
     socket?.disconnect();
     setSocket(null);

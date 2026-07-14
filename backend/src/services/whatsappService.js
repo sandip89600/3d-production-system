@@ -3,6 +3,7 @@ const WhatsAppGroup = require('../models/WhatsAppGroup');
 const MessageLog = require('../models/MessageLog');
 const NotificationLog = require('../models/NotificationLog');
 const Project = require('../models/Project');
+const { getDownloadLink } = require('../utils/downloadToken');
 
 class WhatsAppService {
   constructor() {
@@ -167,7 +168,7 @@ class WhatsAppService {
 
     const categoryLabel = category === 'architecture' ? 'Architecture' : 'Modeling & Rendering';
 
-    const downloadLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/download-project/${project._id}`;
+    const downloadLink = getDownloadLink(project, project.assignedTo || uploader._id);
 
     const message = 
       `🚀 *New Project Uploaded*\n\n` +

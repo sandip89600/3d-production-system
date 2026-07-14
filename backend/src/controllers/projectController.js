@@ -541,8 +541,76 @@ const getProjectDownloadLogs = async (req, res) => {
   }
 };
 
+// GET /project/:projectIdCode (Public download endpoint via query token)
+const downloadProjectByToken = async (req, res) => {
+  try {
+    const { projectIdCode } = req.params;
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).send('<h1>Error</h1><p>Download token is missing.</p>');
+    }
+
+    const jwt = require('jsonwebtoken');
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || '3dproduction_super_secret_jwt_key_2024_enterprise');
+    } catch (err) {
+      return res.status(401).send('<h1>Link Expired or Invalid</h1><p>This download link has expired or is invalid. Download links are only valid for 24 hours.</p>');
+    }
+
+    if (decoded.purpose !== 'project-download' || decoded.projectIdCode !== projectIdCode) {
+      return res.status(400).send('<h1>Error</h1><p>Invalid download token details.</p>');
+    }
+
+    // Find the project
+    const project = await Project.findOne({ projectId: projectIdCode });
+    if (!project) {
+      return res.status(404).send('<h1>Error</h1><p>Project not found.</p>');
+    }
+
+    // Fetch the file record first to get file ID
+    const FileModel = require('../models/File');
+    const fileRecord = await FileModel.findOne({ projectId: project._id, isDeleted: false });
+    if (!fileRecord) {
+      return res.status(404).send('<h1>Error</h1><p>Project file not found or has been deleted.</p>');
+    }
+
+    // Log the download request to ProjectDownloadLog (legacy)
+    const userId = decoded.userId || project.assignedTo || project.uploadedBy;
+    
+    await ProjectDownloadLog.create({
+      project: project._id,
+      employee: userId,
+      fileName: fileRecord.originalName,
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'],
+    });
+
+    // Log the download request to DownloadLog (new, unified logs)
+    await DownloadLog.create({
+      userId,
+      projectId: project._id,
+      fileId: fileRecord._id,
+      downloadedAt: new Date(),
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'],
+      deviceType: getDeviceType(req.headers['user-agent']),
+    });
+
+    // Generate signed URL (expires in 1 hour for immediate download consumption)
+    const downloadUrl = await storageService.getSignedUrl(fileRecord._id, 3600);
+
+    // Redirect user browser to download the file directly
+    res.redirect(downloadUrl);
+  } catch (error) {
+    console.error('Error during token download redirect:', error);
+    res.status(500).send('<h1>Server Error</h1><p>An internal server error occurred.</p>');
+  }
+};
+
 module.exports = {
   getProjects, getProjectById, createProject, updateProject, deleteProject,
   pickupProject, updateProgress, submitForReview, approveProject, rejectProject, getProgressLogs,
-  getSecureDownloadUrl, getProjectDownloadLogs,
+  getSecureDownloadUrl, getProjectDownloadLogs, downloadProjectByToken,
 };

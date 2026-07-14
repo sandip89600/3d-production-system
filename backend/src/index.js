@@ -105,6 +105,10 @@ app.use(generalLimiter);
 // Static file serving (uploads)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Public project download token route (used by WhatsApp links)
+const { downloadProjectByToken } = require('./controllers/projectController');
+app.get('/project/:projectIdCode', downloadProjectByToken);
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

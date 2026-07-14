@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const whatsappService = require('./whatsappCloudService');
 const Project = require('../models/Project');
 const ProjectDownloadLog = require('../models/ProjectDownloadLog');
+const { getDownloadLink } = require('../utils/downloadToken');
 
 /**
  * Hourly scan for employees who picked up projects but haven't downloaded files.
@@ -28,7 +29,7 @@ const checkPendingDownloads = async () => {
 
       if (!hasDownloaded) {
         console.log(`⚠️ Sending reminder to ${project.assignedTo.name} for project "${project.name}"`);
-        const downloadLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/download-project/${project._id}`;
+        const downloadLink = getDownloadLink(project, project.assignedTo._id);
         
         const message = 
           `⚠️ *Reminder*\n\n` +
