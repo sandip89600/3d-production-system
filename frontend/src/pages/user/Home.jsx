@@ -5,7 +5,6 @@ import { Compass, Eye, ShieldCheck, ArrowRight, Play, Sparkles, Building, Layers
 import Card3DTilt from '../../components/public/Card3DTilt';
 import FloatingRenders from '../../components/public/FloatingRenders';
 import BeforeAfterSlider from '../../components/public/BeforeAfterSlider';
-
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [videoFailed, setVideoFailed] = useState(false);
@@ -320,7 +319,7 @@ export default function Home() {
                     </div>
                     <h4 className="text-lg font-bold text-white tracking-tight">{proj.title}</h4>
                     <Link
-                      to={`/portfolio?id=${proj.id}`}
+                      to={`/gallery?cat=${proj.category.toLowerCase()}&id=${proj.id}`}
                       className="text-xs text-white opacity-0 group-hover:opacity-100 flex items-center gap-1 hover:text-amber-500 transition-all font-semibold mt-1"
                     >
                       <span>View Details</span>
@@ -334,10 +333,10 @@ export default function Home() {
 
           <div className="text-center mt-6">
             <Link
-              to="/portfolio"
-              className="inline-flex items-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-850 text-white font-semibold px-8 py-3.5 rounded-xl transition-all hover:border-slate-700 active:scale-95"
+              to="/gallery"
+              className="inline-flex items-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-850 text-white font-semibold px-8 py-3.5 rounded-xl transition-all hover:border-slate-700 active:scale-95 shadow-xl hover:shadow-amber-500/5"
             >
-              <span>View All Projects</span>
+              <span>View More Featured Work</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

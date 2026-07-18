@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Exclude massive files that exceed GitHub 100MB push limits
+public/Gallery/R05_3D_RADHASWAMI isomeric.jpg

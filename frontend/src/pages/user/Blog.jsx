@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Clock, Calendar, ArrowRight, BookOpen, Rss, Eye } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
-
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');

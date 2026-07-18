@@ -32,6 +32,7 @@ export default function Layout() {
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About' },
     { path: '/portfolio', label: 'Portfolio' },
+    { path: '/gallery', label: 'Gallery' },
     { path: '/blog', label: 'Blog' },
     { path: '/contact', label: 'Contact' },
   ];
@@ -258,7 +259,8 @@ export default function Layout() {
             <h4 className="text-white font-semibold text-sm uppercase tracking-wider mb-6">Studio</h4>
             <ul className="flex flex-col gap-3.5 text-sm">
               <li><Link to="/about" className="hover:text-amber-500 transition-colors">Our Story</Link></li>
-              <li><Link to="/portfolio" className="hover:text-amber-500 transition-colors">Portfolio Gallery</Link></li>
+              <li><Link to="/portfolio" className="hover:text-amber-500 transition-colors">Portfolio</Link></li>
+              <li><Link to="/gallery" className="hover:text-amber-500 transition-colors">Render Gallery</Link></li>
               <li><Link to="/blog" className="hover:text-amber-500 transition-colors">Insights & Blog</Link></li>
               <li><Link to="/contact" className="hover:text-amber-500 transition-colors">Get a Quote</Link></li>
             </ul>
@@ -284,7 +286,11 @@ export default function Layout() {
         </div>
 
         <div className="max-w-7xl mx-auto border-t border-slate-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-          <p>© {new Date().getFullYear()} All 3D Studio. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} All 3D Studio. All rights reserved.
+            <span className="mx-2 text-slate-700">|</span>
+            A project by <a href="https://www.deepitlabs.in" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors font-semibold text-slate-350">Deep It Labs</a>
+          </p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-amber-500 transition-colors">Terms of Service</a>

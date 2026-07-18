@@ -10,6 +10,7 @@ import Layout from './components/public/Layout';
 import Home from './pages/user/Home';
 import About from './pages/user/About';
 import Portfolio from './pages/user/Portfolio';
+import Gallery from './pages/user/Gallery';
 import Blog from './pages/user/Blog';
 import Contact from './pages/user/Contact';
 import Login from './pages/user/Login';
@@ -73,6 +74,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/gallery" element={<Gallery />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/contact" element={<Contact />} />
             </Route>
