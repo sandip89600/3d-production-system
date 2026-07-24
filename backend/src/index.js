@@ -1,4 +1,8 @@
 require('dotenv').config();
+const { validateEnv } = require('./config/env');
+// Run env validation before anything else
+validateEnv();
+
 const express = require('express');
 const http = require('http');  
 const { Server } = require('socket.io'); 
@@ -8,6 +12,12 @@ const compression = require('compression');
 const morgan = require('morgan');
 const mongoSanitize = require('express-mongo-sanitize');
 const path = require('path');
+
+const { logger } = require('./utils/logger');
+const { getRedisClient } = require('./config/redis');
+
+// Initialize Redis Client connection
+getRedisClient();
 
 const connectDB = require('./config/database');
 const { generalLimiter } = require('./middleware/rateLimiter');
@@ -77,10 +87,10 @@ io.on('connection', (socket) => {
   const userId = socket.handshake.auth?.userId;
   if (userId) {
     socket.join(`user_${userId}`);
-    console.log(`🔌 Socket connected: User ${userId}`);
+    logger.info(`🔌 Socket connected: User ${userId}`);
   }
   socket.on('disconnect', () => {
-    console.log(`🔌 Socket disconnected: ${socket.id}`);
+    logger.info(`🔌 Socket disconnected: ${socket.id}`);
   });
 });
 
@@ -99,7 +109,13 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Pipe Morgan output into Winston logger
+app.use(morgan(
+  process.env.NODE_ENV === 'production' ? 'combined' : 'dev',
+  { stream: { write: (message) => logger.info(message.trim()) } }
+));
+
 app.use(generalLimiter);
 
 // Static file serving (uploads)
@@ -124,15 +140,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'All3DStudio API is running',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-  });
-});
+const healthRoutes = require('./routes/health');
+app.use('/api', healthRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -141,7 +150,7 @@ app.use('*', (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Global error:', err);
+  logger.error('Global error:', { message: err.message, stack: err.stack });
   if (err.name === 'MulterError') {
     return res.status(400).json({ success: false, message: err.message });
   }
@@ -174,11 +183,11 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 connectDB().then(() => {
   server.listen(PORT, () => {
-    console.log(`\n🚀 All3DStudio Backend`);
-    console.log(`📡 Server running on: http://localhost:${PORT}`);
-    console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
-    console.log(`🔧 Environment: ${process.env.NODE_ENV}`);
-    console.log(`📱 WhatsApp: ${process.env.WHATSAPP_ENABLED === 'true' ? 'Enabled' : 'Simulator Mode'}\n`);
+    logger.info(`🚀 All3DStudio Backend Started`);
+    logger.info(`📡 Server running on: http://localhost:${PORT}`);
+    logger.info(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
+    logger.info(`🔧 Environment: ${process.env.NODE_ENV}`);
+    logger.info(`📱 WhatsApp: ${process.env.WHATSAPP_ENABLED === 'true' ? 'Enabled' : 'Simulator Mode'}`);
     
     // Initialize cron jobs
     cronService.initCron();

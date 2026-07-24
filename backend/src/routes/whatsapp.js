@@ -104,6 +104,10 @@ router.post('/webhook', verifyMetaSignature, async (req, res) => {
                   let mappedStatus = 'sent';
                   if (status === 'failed') {
                     mappedStatus = 'failed';
+                  } else if (status === 'delivered') {
+                    mappedStatus = 'delivered';
+                  } else if (status === 'read') {
+                    mappedStatus = 'read';
                   }
 
                   // Find the MessageLog and update status

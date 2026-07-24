@@ -105,18 +105,18 @@ class WhatsAppCloudService {
    * based on project type, name, or description keywords.
    */
   detectCategory(project) {
-    const text = `${project.name} ${project.type || ''} ${project.description || ''}`.toLowerCase();
+    const text = `${project.name} ${project.type || ''} ${project.description || ''} ${project.fileName || ''} ${project.fileType || ''}`.toLowerCase();
     
-    // Group 1 keywords: Architectural Projects, Exterior Design, Interior Design, Floor Plans, Architectural Visualization, Walkthrough Projects
+    // Group 1 keywords: Architecture, Exterior, Interior, Villa, Building, Walkthrough, Elevation, House, Floor Plan
     const archKeywords = [
-      'architecture', 'exterior', 'interior', 'floor plan', 'walkthrough', 
-      'villa', 'house', 'building', 'elevation', 'apartment', 'home', 'architectural'
+      'architecture', 'exterior', 'interior', 'villa', 'building', 'walkthrough', 
+      'elevation', 'house', 'floor plan', 'architectural'
     ];
     
-    // Group 2 keywords: 3D Modeling, Product Modeling, Furniture Modeling, Character Modeling, Rendering, Texturing, Lighting, 3D Assets
+    // Group 2 keywords: Modeling, Render, Rendering, Furniture, Texture, Lighting, Asset, Character, Animation, FBX, BLEND
     const modelingKeywords = [
-      'modeling', 'rendering', 'render', 'texture', 'texturing', 'lighting', 
-      'product', 'furniture', 'character', 'asset', 'rigging', 'animation'
+      'modeling', 'render', 'rendering', 'furniture', 'texture', 'lighting', 
+      'asset', 'character', 'animation', 'fbx', 'blend'
     ];
 
     let archScore = 0;
@@ -131,6 +131,11 @@ class WhatsAppCloudService {
       const matches = text.match(new RegExp(k, 'g'));
       if (matches) modelScore += matches.length;
     });
+
+    // Score file types heavily
+    if (text.includes('.fbx') || text.includes('.blend')) {
+      modelScore += 10;
+    }
 
     if (archScore > modelScore) {
       return 'architecture';
@@ -233,23 +238,22 @@ class WhatsAppCloudService {
     const group = await this.getGroupByCategory(category);
 
     const deadlineStr = new Date(project.deadline).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'long'
+      day: 'numeric', month: 'long', year: 'numeric'
     });
 
-    const categoryLabel = category === 'architecture' ? 'Architecture' : 'Modeling & Rendering';
+    const categoryLabel = category === 'architecture' ? '3D Architecture' : 'Modeling & Rendering';
+    const portalUrl = `${process.env.FRONTEND_URL || 'https://allindia3dstudio.deepitlabs.in'}/download-project/${project._id}`;
 
-    const downloadLink = getDownloadLink(project, project.assignedTo || uploader._id);
+    const uploaderRoleLabel = uploader.role === 'superadmin' ? 'Super Admin' : 'Admin';
 
     const message = 
       `🚀 *New Project Uploaded*\n\n` +
-      `Project: ${project.name}\n` +
-      `Department: ${categoryLabel}\n` +
-      `Uploaded By: ${uploader.name}\n\n` +
-      `📥 *Download Project Files*:\n` +
-      `${downloadLink}\n\n` +
-      `Please download the files and start work.\n\n` +
-      `Deadline:\n` +
-      `${deadlineStr}`;
+      `*Project:*\n${project.name}\n\n` +
+      `*Department:*\n${categoryLabel}\n\n` +
+      `*Uploaded By:*\n${uploaderRoleLabel} - ${uploader.name}\n\n` +
+      `*Deadline:*\n${deadlineStr}\n\n` +
+      `📥 *Open Project:*\n${portalUrl}\n\n` +
+      `Please login, view project details, reference files, and download resources from the portal.`;
 
     return this.sendAndLogMessage({
       group,

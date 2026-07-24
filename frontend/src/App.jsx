@@ -21,6 +21,7 @@ import UserDashboard from './pages/user/UserDashboard';
 
 // Internal Staff Auth (Admin Portal)
 import LoginPage from './pages/admin/auth/LoginPage';
+import SignupPage from './pages/admin/auth/SignupPage';
 import ForgotPasswordPage from './pages/admin/auth/ForgotPasswordPage';
 import VerifyOTPPage from './pages/admin/auth/VerifyOTPPage';
 import ResetPasswordPage from './pages/admin/auth/ResetPasswordPage';
@@ -89,6 +90,7 @@ function App() {
             <Route path="/employee/login" element={<PublicRoute><LoginPage portalRole="employee" /></PublicRoute>} />
             <Route path="/admin/login" element={<PublicRoute><LoginPage portalRole="admin" /></PublicRoute>} />
             <Route path="/superadmin/login" element={<PublicRoute><LoginPage portalRole="superadmin" /></PublicRoute>} />
+            <Route path="/staff/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
             <Route path="/admin/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
             <Route path="/admin/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
             <Route path="/admin/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />

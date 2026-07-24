@@ -45,7 +45,8 @@ const getS3Key = async (folder, fileName, uploadedBy, projectId) => {
         return `previews/${projectIdCode}/images/${cleanFileName}`;
       }
     } catch (err) {
-      console.error('[s3Service] Error getting project code for S3 key:', err.message);
+      const { logger } = require('../../utils/logger');
+      logger.error('[s3Service] Error getting project code for S3 key:', { error: err.message });
     }
   }
 

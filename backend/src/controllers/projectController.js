@@ -532,10 +532,50 @@ const getSecureDownloadUrl = async (req, res) => {
 // GET /api/projects/:id/download-logs
 const getProjectDownloadLogs = async (req, res) => {
   try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
     const logs = await ProjectDownloadLog.find({ project: req.params.id })
       .populate('employee', 'name email role adminCode')
       .sort({ createdAt: -1 });
-    res.json({ success: true, logs });
+
+    // Unique users who have downloaded
+    const uniqueDownloads = await ProjectDownloadLog.distinct('employee', { project: project._id });
+    const downloadedCount = uniqueDownloads.length;
+
+    // Find all active employees of the department
+    const User = require('../models/User');
+    const deptEmployees = await User.find({ department: project.department, role: 'employee', isActive: true });
+
+    const downloadedUserIdsStr = uniqueDownloads.map(id => id.toString());
+    const pendingEmployees = deptEmployees.filter(emp => !downloadedUserIdsStr.includes(emp._id.toString()));
+    const remainingCount = pendingEmployees.length;
+
+    // Resolve WhatsApp notification status from logs
+    const NotificationLog = require('../models/NotificationLog');
+    const notification = await NotificationLog.findOne({ project: project._id, type: 'upload' })
+      .populate('messageLog');
+
+    let whatsappSent = project.whatsappNotified;
+    let whatsappDelivered = false;
+
+    if (notification && notification.messageLog) {
+      whatsappSent = true;
+      whatsappDelivered = ['delivered', 'read'].includes(notification.messageLog.status);
+    }
+
+    res.json({
+      success: true,
+      logs,
+      stats: {
+        projectUploaded: true,
+        whatsappSent,
+        whatsappDelivered,
+        downloadedCount,
+        remainingCount,
+        pendingEmployees: pendingEmployees.map(emp => ({ name: emp.name, email: emp.email })),
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

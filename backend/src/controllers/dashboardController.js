@@ -1,6 +1,7 @@
 const dashboardService = require('../services/dashboardService');
 const notificationService = require('../services/notificationService');
 const { logActivity } = require('../middleware/auth');
+const redisService = require('../services/redisService');
 
 /**
  * Controller for Dashboard Analytics Module
@@ -9,7 +10,11 @@ const { logActivity } = require('../middleware/auth');
 // GET /api/dashboard/superadmin
 const getSuperAdminDashboard = async (req, res) => {
   try {
-    const data = await dashboardService.getSuperAdminDashboardData();
+    const data = await redisService.wrap(
+      'dashboard:superadmin',
+      () => dashboardService.getSuperAdminDashboardData(),
+      120 // Cache for 2 minutes
+    );
 
     await logActivity(req, 'dashboard_view', 'Viewed Super Admin Dashboard analytics');
 
@@ -25,7 +30,11 @@ const getSuperAdminDashboard = async (req, res) => {
 // GET /api/dashboard/admin
 const getAdminDashboard = async (req, res) => {
   try {
-    const data = await dashboardService.getAdminDashboardData(req.user._id);
+    const data = await redisService.wrap(
+      `dashboard:admin:${req.user._id}`,
+      () => dashboardService.getAdminDashboardData(req.user._id),
+      120 // Cache for 2 minutes
+    );
 
     await logActivity(req, 'dashboard_view', 'Viewed Admin Dashboard analytics');
 
@@ -44,7 +53,11 @@ const getEmployeeDashboard = async (req, res) => {
     // If employee is not in any department, departmentId is null.
     // Ensure we handle it gracefully
     const departmentId = req.user.department ? req.user.department._id : null;
-    const data = await dashboardService.getEmployeeDashboardData(req.user._id, departmentId);
+    const data = await redisService.wrap(
+      `dashboard:employee:${req.user._id}`,
+      () => dashboardService.getEmployeeDashboardData(req.user._id, departmentId),
+      120 // Cache for 2 minutes
+    );
 
     await logActivity(req, 'dashboard_view', 'Viewed Employee Dashboard analytics');
 
@@ -60,7 +73,11 @@ const getEmployeeDashboard = async (req, res) => {
 // GET /api/dashboard/client
 const getClientDashboard = async (req, res) => {
   try {
-    const data = await dashboardService.getClientDashboardData(req.user._id);
+    const data = await redisService.wrap(
+      `dashboard:client:${req.user._id}`,
+      () => dashboardService.getClientDashboardData(req.user._id),
+      120 // Cache for 2 minutes
+    );
 
     await logActivity(req, 'dashboard_view', 'Viewed Client Dashboard analytics');
 
@@ -76,7 +93,11 @@ const getClientDashboard = async (req, res) => {
 // GET /api/dashboard/project-status
 const getProjectStatusStats = async (req, res) => {
   try {
-    const data = await dashboardService.getProjectStatusChartData();
+    const data = await redisService.wrap(
+      'dashboard:project_status',
+      () => dashboardService.getProjectStatusChartData(),
+      300 // Cache charts for 5 minutes
+    );
     res.json({ success: true, projectStatus: data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -86,7 +107,11 @@ const getProjectStatusStats = async (req, res) => {
 // GET /api/dashboard/monthly
 const getMonthlyTrend = async (req, res) => {
   try {
-    const data = await dashboardService.getMonthlyAnalyticsChartData();
+    const data = await redisService.wrap(
+      'dashboard:monthly_trend',
+      () => dashboardService.getMonthlyAnalyticsChartData(),
+      300 // Cache charts for 5 minutes
+    );
     res.json({ success: true, monthlyTrend: data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -96,7 +121,11 @@ const getMonthlyTrend = async (req, res) => {
 // GET /api/dashboard/department
 const getDepartmentStats = async (req, res) => {
   try {
-    const data = await dashboardService.getDepartmentChartData();
+    const data = await redisService.wrap(
+      'dashboard:department_stats',
+      () => dashboardService.getDepartmentChartData(),
+      300 // Cache charts for 5 minutes
+    );
     res.json({ success: true, departmentStats: data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

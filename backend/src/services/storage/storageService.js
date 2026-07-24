@@ -89,7 +89,8 @@ const uploadFile = async ({
       uploadSource: 'web',
     });
   } catch (err) {
-    console.error('[StorageService] Failed to create upload log:', err.message);
+    const { logger } = require('../../utils/logger');
+    logger.error('[StorageService] Failed to create upload log:', { error: err.message });
   }
 
   return { url, storageKey, fileRecord };

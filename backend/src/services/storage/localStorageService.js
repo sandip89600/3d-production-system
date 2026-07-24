@@ -38,7 +38,8 @@ const deleteAsset = async (storageKey) => {
     try {
       fs.unlinkSync(fullPath);
     } catch (err) {
-      console.warn('[localStorageService] Could not delete local file:', err.message);
+      const { logger } = require('../../utils/logger');
+      logger.warn('[localStorageService] Could not delete local file:', { error: err.message });
     }
   }
 };

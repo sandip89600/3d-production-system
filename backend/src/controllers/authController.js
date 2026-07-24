@@ -429,6 +429,8 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const redisService = require('../services/redisService');
+
 const forgotPasswordEmail = async (req, res) => {
   try {
     const { email } = req.body;
@@ -444,10 +446,8 @@ const forgotPasswordEmail = async (req, res) => {
     const otpVal = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(otpVal, 10);
 
-    user.otp = hashedOtp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
-    user.otpAttempts = 0;
-    await user.save();
+    // Save OTP to Redis (5 minutes TTL)
+    await redisService.saveOTP(user.email, hashedOtp, 300);
 
     await emailService.sendOTP(user.email, otpVal);
 
@@ -478,10 +478,8 @@ const forgotPasswordMobile = async (req, res) => {
     const otpVal = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(otpVal, 10);
 
-    user.otp = hashedOtp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
-    user.otpAttempts = 0;
-    await user.save();
+    // Save OTP to Redis (5 minutes TTL)
+    await redisService.saveOTP(user.mobile, hashedOtp, 300);
 
     const smsContent = `Your All 3D Studio verification OTP is ${otpVal}. It is valid for 5 minutes.`;
     await sendSMS(user.mobile, smsContent);
@@ -516,35 +514,41 @@ const verifyOTP = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User not found.' });
     }
 
-    if (!user.otp) {
-      return res.status(400).json({ success: false, message: 'No OTP requested for this user.' });
+    // Resolve which key contains the active OTP in Redis
+    let activeKey = null;
+    let hashedOtp = await redisService.getOTP(user.email);
+    if (hashedOtp) {
+      activeKey = user.email;
+    } else {
+      hashedOtp = await redisService.getOTP(user.mobile);
+      if (hashedOtp) {
+        activeKey = user.mobile;
+      }
     }
 
-    if (user.otpExpiry < Date.now()) {
-      return res.status(400).json({ success: false, message: 'OTP has expired.' });
+    if (!hashedOtp) {
+      return res.status(400).json({ success: false, message: 'No OTP requested or OTP has expired.' });
     }
 
-    if (user.otpAttempts >= 5) {
+    const attempts = await redisService.getOTPAttempts(activeKey);
+    if (attempts >= 5) {
       return res.status(400).json({ success: false, message: 'Too many incorrect OTP attempts. Please request a new OTP.' });
     }
 
-    const isMatch = await bcrypt.compare(otp, user.otp);
+    const isMatch = await bcrypt.compare(otp, hashedOtp);
     if (!isMatch) {
-      user.otpAttempts += 1;
-      await user.save();
-      return res.status(400).json({ success: false, message: `Invalid OTP. ${5 - user.otpAttempts} attempts remaining.` });
+      const nextAttempts = await redisService.incrementOTPAttempts(activeKey);
+      return res.status(400).json({ success: false, message: `Invalid OTP. ${5 - nextAttempts} attempts remaining.` });
     }
 
     // OTP is correct - generate a short-lived password reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    // Clear OTP
-    user.otp = null;
-    user.otpExpiry = null;
-    user.otpAttempts = 0;
     await user.save();
+
+    // Clear OTP from Redis cache
+    await redisService.clearOTP(activeKey);
 
     await ActivityLog.create({
       user: user._id, userEmail: user.email, userRole: user.role,

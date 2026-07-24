@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { Eye, EyeOff, Boxes, Shield, Zap, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -133,7 +133,7 @@ export default function LoginPage({ portalRole = 'employee' }) {
               Welcome back
             </h2>
             <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-              Sign in to the <span className="font-semibold text-blue-400 capitalize">{portalRole}</span> workspace. Self-registration is disabled for security.
+              Sign in to the <span className="font-semibold text-blue-400 capitalize">{portalRole}</span> workspace. {portalRole === 'superadmin' ? 'Self-registration is disabled for security.' : 'If you do not have an account, click the link below to register.'}
             </p>
           </div>
 
@@ -220,6 +220,18 @@ export default function LoginPage({ portalRole = 'employee' }) {
               )}
             </button>
           </form>
+
+          {/* Footer actions */}
+          {portalRole !== 'superadmin' && (
+            <div className="text-center mt-6 text-xs text-slate-400">
+              <p>
+                Don't have an account?{' '}
+                <Link to="/staff/signup" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                  Create account
+                </Link>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

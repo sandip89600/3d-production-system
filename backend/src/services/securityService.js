@@ -5,6 +5,7 @@ const Project = require('../models/Project');
 const Notification = require('../models/Notification');
 const emailService = require('./emailService');
 const whatsappService = require('./whatsappService');
+const { logger, logSecurity } = require('../utils/logger');
 
 class SecurityService {
   constructor() {
@@ -97,7 +98,7 @@ class SecurityService {
       }
 
     } catch (err) {
-      console.error('[SecurityService] logLoginAttempt error:', err.message);
+      logger.error('[SecurityService] logLoginAttempt error:', { error: err.message });
     }
   }
 
@@ -130,7 +131,7 @@ class SecurityService {
         await this.triggerUnauthorizedAlert({ ipAddress, route, location, count: unauthorizedCount });
       }
     } catch (err) {
-      console.error('[SecurityService] logUnauthorizedAccess error:', err.message);
+      logger.error('[SecurityService] logUnauthorizedAccess error:', { error: err.message });
     }
   }
 
@@ -141,7 +142,7 @@ class SecurityService {
       const project = await Project.findOne({ name: projectName });
 
       if (!client || !project) {
-        console.warn('[SecurityService] Client or Project not found for payment alert.');
+        logger.warn('[SecurityService] Client or Project not found for payment alert.');
         return;
       }
 
@@ -163,7 +164,7 @@ class SecurityService {
       });
 
     } catch (err) {
-      console.error('[SecurityService] logPayment error:', err.message);
+      logger.error('[SecurityService] logPayment error:', { error: err.message });
     }
   }
 
@@ -172,7 +173,7 @@ class SecurityService {
   // ─────────────────────────────────────────────────────────────────
 
   async triggerFailedLoginAlert({ email, ipAddress, location, timestamp }) {
-    console.log(`🚨 [Security Alarm] Brute Force Attack detected on ${email} (Account Locked)`);
+    logSecurity(`🚨 Brute Force Attack detected on ${email} (Account Locked)`, { email, ipAddress, location });
     const superAdmins = await User.find({ role: 'superadmin', isActive: true });
 
     // Format matches request specification
@@ -216,7 +217,7 @@ class SecurityService {
   }
 
   async triggerNewDeviceAlert({ name, device, ipAddress, location, timestamp }) {
-    console.log(`✅ [Login Notification] New device login detected for: ${name}`);
+    logger.info(`✅ New device login detected for: ${name}`, { name, device, ipAddress, location });
 
     // Format matches request specification exactly
     const message = 
@@ -253,7 +254,7 @@ class SecurityService {
   }
 
   async triggerUnauthorizedAlert({ ipAddress, route, location, count }) {
-    console.log(`🚨 [Security Alarm] Direct Unauthorized Access scans detected from: ${ipAddress}`);
+    logSecurity(`🚨 Direct Unauthorized Access scans detected from: ${ipAddress}`, { ipAddress, route, location, count });
 
     const message = 
       `⚠ *Security Alert*\n\n` +
@@ -289,7 +290,7 @@ class SecurityService {
   }
 
   async triggerPaymentAlert({ transactionId, clientName, companyName, amount, projectName }) {
-    console.log(`💰 [Finance Alert] Payment of ₹${amount} received from ${clientName}`);
+    logger.info(`💰 Payment of ₹${amount} received from ${clientName}`, { transactionId, clientName, amount, projectName });
 
     // Format matches request specification exactly
     const message = 

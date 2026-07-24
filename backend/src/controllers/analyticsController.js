@@ -3,6 +3,8 @@ const ProjectAssignment = require('../models/ProjectAssignment');
 const User = require('../models/User');
 const Department = require('../models/Department');
 const ActivityLog = require('../models/ActivityLog');
+const MessageLog = require('../models/MessageLog');
+const ProjectDownloadLog = require('../models/ProjectDownloadLog');
 
 // GET /api/analytics/overview — Super Admin
 // GET /api/analytics/overview — Super Admin
@@ -76,6 +78,54 @@ const getOverview = async (req, res) => {
       { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]);
 
+    // ─── Super Admin Workflow Analytics ──────────────────────────────────
+    // 1. WhatsApp stats
+    const totalWhatsAppSent = await MessageLog.countDocuments({ status: { $in: ['sent', 'delivered', 'read'] } });
+    const totalWhatsAppDelivered = await MessageLog.countDocuments({ status: { $in: ['delivered', 'read'] } });
+
+    // 2. Download Success Rate (projects with at least 1 download vs total projects)
+    const projectsWithDownloads = await ProjectDownloadLog.distinct('project');
+    const downloadSuccessRate = totalProjects > 0 
+      ? Math.round((projectsWithDownloads.length / totalProjects) * 100)
+      : 100;
+
+    // 3. Pending Downloads Across All Active Projects
+    let pendingDownloadsCount = 0;
+    const activeProjectsList = await Project.find({ status: { $ne: 'completed' } }).populate('department');
+    for (const proj of activeProjectsList) {
+      if (proj.department) {
+        const uniqueDowns = await ProjectDownloadLog.distinct('employee', { project: proj._id });
+        const deptEmpsCount = await User.countDocuments({ department: proj.department._id, role: 'employee', isActive: true });
+        pendingDownloadsCount += Math.max(0, deptEmpsCount - uniqueDowns.length);
+      }
+    }
+
+    // 4. Most Active Employee (highest downloads)
+    const mostActiveEmp = await ProjectDownloadLog.aggregate([
+      { $group: { _id: '$employee', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 1 },
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } }
+    ]);
+    const mostActiveEmployeeName = mostActiveEmp[0]?.user?.name || 'N/A';
+
+    // 5. Average Download Time (in hours)
+    const downloadTimeDiffs = await ProjectDownloadLog.aggregate([
+      { $lookup: { from: 'projects', localField: 'project', foreignField: '_id', as: 'proj' } },
+      { $unwind: '$proj' },
+      { 
+        $project: {
+          diffMs: { $subtract: ['$downloadedAt', '$proj.createdAt'] }
+        }
+      },
+      { $group: { _id: null, avgDiff: { $avg: '$diffMs' } } }
+    ]);
+    const avgDiffMs = downloadTimeDiffs[0]?.avgDiff || 0;
+    const avgDownloadTimeHours = avgDiffMs > 0 
+      ? Math.round((avgDiffMs / (1000 * 60 * 60)) * 10) / 10 
+      : 0;
+
     res.json({
       success: true,
       overview: {
@@ -91,7 +141,14 @@ const getOverview = async (req, res) => {
         activeUsers: activeUsersCount,
         onlineUsers: onlineUsersCount,
         loginsToday: loginsTodayCount,
-        newUsersThisMonth: newUsersThisMonthCount
+        newUsersThisMonth: newUsersThisMonthCount,
+        // Workflow metrics
+        whatsappSentCount: totalWhatsAppSent,
+        whatsappDeliveredCount: totalWhatsAppDelivered,
+        downloadSuccessRate,
+        pendingDownloadsCount,
+        mostActiveEmployeeName,
+        avgDownloadTimeHours,
       },
       statusBreakdown,
       deptStats,

@@ -6,7 +6,7 @@ import StatsCard from '../../../components/StatsCard';
 import { StatusBadge, PriorityBadge, ProgressBar } from '../../../components/Badges';
 import {
   FolderKanban, Users, Building2, CheckCircle2, Clock, AlertTriangle,
-  TrendingUp, Activity, Layers, Zap,
+  TrendingUp, Activity, Layers, Zap, MessageSquare, Download, AlertCircle, Award,
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -80,12 +80,21 @@ export default function SuperAdminDashboard() {
         <StatsCard title="Completed" value={overview.completedProjects} icon={CheckCircle2} color="emerald" />
         <StatsCard title="Delayed" value={overview.delayedProjects} icon={AlertTriangle} color="red" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Registered Users" value={overview.totalRegisteredUsers || overview.totalUsers} icon={Users} color="cyan" />
         <StatsCard title="Active Users" value={overview.activeUsers} icon={CheckCircle2} color="indigo" />
         <StatsCard title="Online Users" value={overview.onlineUsers} icon={Activity} color="emerald" />
         <StatsCard title="Logins Today" value={overview.loginsToday} icon={Zap} color="amber" />
         <StatsCard title="New This Month" value={overview.newUsersThisMonth} icon={TrendingUp} color="pink" />
+      </div>
+      
+      {/* WhatsApp & Download Workflow Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <StatsCard title="WhatsApp Delivered" value={`${overview.whatsappDeliveredCount || 0} / ${overview.whatsappSentCount || 0}`} icon={MessageSquare} color="emerald" />
+        <StatsCard title="Download Success" value={`${overview.downloadSuccessRate || 0}%`} icon={Download} color="blue" />
+        <StatsCard title="Pending Downloads" value={overview.pendingDownloadsCount || 0} icon={AlertCircle} color="amber" />
+        <StatsCard title="Avg Download Time" value={`${overview.avgDownloadTimeHours || 0}h`} icon={Clock} color="purple" />
+        <StatsCard title="Most Active Employee" value={overview.mostActiveEmployeeName || 'N/A'} icon={Award} color="pink" />
       </div>
 
       {/* Charts Row */}
