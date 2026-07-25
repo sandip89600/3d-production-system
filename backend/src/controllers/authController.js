@@ -253,6 +253,8 @@ const login = async (req, res) => {
       location: 'Local Network'
     }).catch(err => console.error('Failed to send login alert:', err.message));
 
+    await user.populate('department', 'name code color icon');
+
     const userObj = user.toJSON();
     res.json({
       success: true,
@@ -348,6 +350,8 @@ const register = async (req, res) => {
     // Send Welcome Email in background
     emailService.sendWelcomeEmail(user.email, user.name, user.companyName || '')
       .catch(err => console.error('Welcome email failed:', err.message));
+
+    await user.populate('department', 'name code color icon');
 
     const userObj = user.toJSON();
     res.status(201).json({

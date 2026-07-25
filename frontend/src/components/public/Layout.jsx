@@ -115,20 +115,12 @@ export default function Layout() {
                 </button>
               </div>
             ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-sm font-medium text-slate-300 hover:text-white transition-colors py-1.5 px-4"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/signup"
-                  className="text-sm font-semibold text-slate-950 bg-amber-500 hover:bg-amber-400 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-amber-500/10 hover:shadow-amber-500/25 active:scale-95"
-                >
-                  Sign Up
-                </Link>
-              </>
+              <Link
+                to="/login"
+                className="text-sm font-semibold text-slate-950 bg-amber-500 hover:bg-amber-400 px-4 py-2 rounded-xl transition-all duration-300 shadow-md shadow-amber-500/10 hover:shadow-amber-500/25 active:scale-95"
+              >
+                Login
+              </Link>
             )}
           </div>
 
@@ -191,15 +183,9 @@ export default function Layout() {
               <div className="flex flex-col gap-3 w-full max-w-xs">
                 <Link
                   to="/login"
-                  className="w-full text-center text-sm border border-slate-800 bg-slate-900 py-3 rounded-xl text-slate-300"
-                >
-                  Log In
-                </Link>
-                <Link
-                  to="/signup"
                   className="w-full text-center text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 py-3 rounded-xl font-bold"
                 >
-                  Sign Up
+                  Log In
                 </Link>
               </div>
             )}
