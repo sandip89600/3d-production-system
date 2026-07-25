@@ -198,6 +198,12 @@ class WhatsAppCloudService {
     }
 
     try {
+      const mongoose = require('mongoose');
+      if (mongoose.connection.readyState !== 1) {
+        console.warn('⚠️ MongoDB not connected. Skipping DB logging for WhatsApp message.');
+        return { success: status !== 'failed' };
+      }
+
       // Save MessageLog (Recipient, Message, Status, Meta Message ID, Timestamp)
       const messageLog = await MessageLog.create({
         group: group ? group._id : undefined,
