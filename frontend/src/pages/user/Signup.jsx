@@ -53,8 +53,8 @@ export default function Signup() {
       toast.error('Passwords do not match.');
       return;
     }
-    if (strengthCount < 5) {
-      toast.error('Password does not meet strength guidelines.');
+    if (form.password.length < 6) {
+      toast.error('Password must be at least 6 characters.');
       return;
     }
 

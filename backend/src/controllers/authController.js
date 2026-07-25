@@ -150,9 +150,10 @@ const login = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Account is deactivated.' });
     }
 
-    // Force Email Verification
+    // Auto-verify emails during login for zero-hassle experience
     if (!user.emailVerified) {
-      return res.status(403).json({ success: false, message: 'Please verify your email address before logging in.' });
+      user.emailVerified = true;
+      await user.save();
     }
 
     const isMatch = await user.comparePassword(password);
@@ -289,12 +290,11 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Disposable email providers are not allowed' });
     }
 
-    // Password strength check
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#.\-_])[A-Za-z\d@$!%*?&#.\-_]{8,}$/;
-    if (!passwordRegex.test(password)) {
+    // Relaxed password strength check for zero-hassle user experience
+    if (!password || password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#.-_).'
+        message: 'Password must be at least 6 characters long.'
       });
     }
 
@@ -311,10 +311,6 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Department selection is mandatory for employees.' });
     }
 
-    // Generate Verification Token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
     const user = new User({
       name,
       email: email.toLowerCase(),
@@ -325,9 +321,7 @@ const register = async (req, res) => {
       companyName: targetRole === 'client' ? companyName : undefined,
       mobile: mobile || undefined,
       isActive: true,
-      emailVerified: false,
-      verificationToken,
-      verificationTokenExpires,
+      emailVerified: true, // Auto-verified for a seamless experience
       loginMethod: 'credentials'
     });
 
@@ -342,16 +336,26 @@ const register = async (req, res) => {
 
     await ActivityLog.create({
       user: user._id, userEmail: user.email, userRole: user.role,
-      action: 'register_pending_verification', success: true, ip: req.ip, userAgent: req.headers['user-agent'],
+      action: 'register', success: true, ip: req.ip, userAgent: req.headers['user-agent'],
     });
 
-    // Send Verification Email
-    await emailService.sendVerificationEmail(user.email, user.name, verificationToken)
-      .catch(err => console.error('Verification email trigger failed:', err.message));
+    // Generate JWT & session tokens for instant auto-login
+    const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+    await User.findByIdAndUpdate(user._id, {
+      $push: { refreshTokens: { $each: [refreshToken], $slice: -5 } },
+    });
 
+    // Send Welcome Email in background
+    emailService.sendWelcomeEmail(user.email, user.name, user.companyName || '')
+      .catch(err => console.error('Welcome email failed:', err.message));
+
+    const userObj = user.toJSON();
     res.status(201).json({
       success: true,
-      message: 'Account created! Please check your email to verify your account before logging in.'
+      message: 'Registration successful! Welcome to All 3D Studio.',
+      accessToken,
+      refreshToken,
+      user: userObj
     });
   } catch (error) {
     console.error('Registration error:', error);
