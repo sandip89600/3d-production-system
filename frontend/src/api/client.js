@@ -37,8 +37,8 @@ api.interceptors.response.use(
           const path = window.location.pathname;
           if (path.startsWith('/employee')) {
             window.location.href = '/employee/login';
-          } else if (path.startsWith('/superadmin')) {
-            window.location.href = '/superadmin/login';
+          } else if (path.startsWith('/developer')) {
+            window.location.href = '/developer/login';
           } else if (path.startsWith('/admin')) {
             window.location.href = '/admin/login';
           } else {

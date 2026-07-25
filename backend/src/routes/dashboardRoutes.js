@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getSuperAdminDashboard,
+  getDeveloperDashboard,
   getAdminDashboard,
   getEmployeeDashboard,
   getProjectStatusStats,
@@ -19,8 +19,8 @@ const { validateDashboardQueries } = require('../validators/dashboardValidator')
 router.use(authenticateJWT);
 
 // Role-specific Dashboards
-router.get('/superadmin', requireRole('superadmin', 'admin'), getSuperAdminDashboard);
-router.get('/admin', requireRole('admin', 'superadmin'), getAdminDashboard);
+router.get('/developer', requireRole('developer', 'admin'), getDeveloperDashboard);
+router.get('/admin', requireRole('admin', 'developer'), getAdminDashboard);
 router.get('/employee', requireRole('employee'), getEmployeeDashboard);
 router.get('/client', requireRole('client'), getClientDashboard);
 
@@ -28,8 +28,8 @@ router.get('/client', requireRole('client'), getClientDashboard);
 router.get('/project-status', getProjectStatusStats);
 router.get('/monthly', getMonthlyTrend);
 router.get('/department', getDepartmentStats);
-router.get('/employees', requireRole('superadmin', 'admin'), getEmployeesPerformance);
-router.get('/recent-activities', requireRole('superadmin', 'admin'), validateDashboardQueries, getRecentActivities);
+router.get('/employees', requireRole('developer', 'admin'), getEmployeesPerformance);
+router.get('/recent-activities', requireRole('developer', 'admin'), validateDashboardQueries, getRecentActivities);
 router.get('/notifications', validateDashboardQueries, getDashboardNotifications);
 
 module.exports = router;

@@ -7,10 +7,10 @@ async function runTest() {
     console.log('🧪 Starting Auth Persistence Simulation...');
     
     // 1. Simulate Login
-    console.log('1. Logging in as Super Admin...');
+    console.log('1. Logging in as Developer...');
     const loginRes = await axios.post(`${API_URL}/auth/login`, {
-      email: 'superadmin@all3dstudio.com',
-      password: 'SuperAdmin@123'
+      email: 'developer@all3dstudio.com',
+      password: 'Developer@123'
     });
 
     const { accessToken, refreshToken, user } = loginRes.data;

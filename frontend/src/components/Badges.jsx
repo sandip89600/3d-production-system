@@ -30,7 +30,7 @@ export function PriorityBadge({ priority }) {
 
 export function RoleBadge({ role }) {
   const roleMap = {
-    superadmin: { label: 'Developer', cls: 'bg-purple-500/20 text-purple-400' },
+    developer: { label: 'Developer', cls: 'bg-purple-500/20 text-purple-400' },
     admin: { label: 'Admin', cls: 'bg-blue-500/20 text-blue-400' },
     employee: { label: 'Employee', cls: 'bg-emerald-500/20 text-emerald-400' },
   };

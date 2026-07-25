@@ -7,16 +7,16 @@ const redisService = require('../services/redisService');
  * Controller for Dashboard Analytics Module
  */
 
-// GET /api/dashboard/superadmin
-const getSuperAdminDashboard = async (req, res) => {
+// GET /api/dashboard/developer
+const getDeveloperDashboard = async (req, res) => {
   try {
     const data = await redisService.wrap(
-      'dashboard:superadmin',
-      () => dashboardService.getSuperAdminDashboardData(),
+      'dashboard:developer',
+      () => dashboardService.getDeveloperDashboardData(),
       120 // Cache for 2 minutes
     );
 
-    await logActivity(req, 'dashboard_view', 'Viewed Super Admin Dashboard analytics');
+    await logActivity(req, 'dashboard_view', 'Viewed Developer Dashboard analytics');
 
     res.json({
       success: true,
@@ -181,7 +181,7 @@ const getDashboardNotifications = async (req, res) => {
 };
 
 module.exports = {
-  getSuperAdminDashboard,
+  getDeveloperDashboard,
   getAdminDashboard,
   getEmployeeDashboard,
   getProjectStatusStats,

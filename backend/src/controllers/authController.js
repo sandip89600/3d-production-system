@@ -440,9 +440,9 @@ const googleLogin = async (req, res) => {
       await emailService.sendWelcomeEmail(user.email, user.name, '')
         .catch(err => console.error('Welcome email failed:', err.message));
     } else {
-      // Disallow Google login for Super Admins unless specifically enabled
-      if (user.role === 'superadmin') {
-        return res.status(403).json({ success: false, message: 'Google Authentication is disabled for Super Admins.' });
+      // Disallow Google login for Developers unless specifically enabled
+      if (user.role === 'developer') {
+        return res.status(403).json({ success: false, message: 'Google Authentication is disabled for Developers.' });
       }
 
       // Sync Google parameters

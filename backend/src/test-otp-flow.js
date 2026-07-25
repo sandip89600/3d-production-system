@@ -16,7 +16,7 @@ async function runTest() {
     console.log('✅ Connected to MongoDB.');
 
     console.log('\n--- 1. Triggering Forgot Password (Email) ---');
-    const email = 'superadmin@all3dstudio.com';
+    const email = 'developer@all3dstudio.com';
     const forgotRes = await axios.post(`${API_URL}/auth/forgot-password/email`, { email });
     console.log('   Response:', forgotRes.data);
 
@@ -58,7 +58,7 @@ async function runTest() {
     }
 
     console.log('\n--- 5. Testing strong password reset ---');
-    const newPassword = 'NewSuperAdmin@123';
+    const newPassword = 'NewDeveloper@123';
     const resetRes = await axios.post(`${API_URL}/auth/reset-password`, {
       token: resetToken,
       password: newPassword
@@ -74,11 +74,11 @@ async function runTest() {
 
     console.log('\n--- 7. Reverting password to default ---');
     const userAfter = await User.findOne({ email });
-    userAfter.password = 'SuperAdmin@123';
+    userAfter.password = 'Developer@123';
     userAfter.resetPasswordToken = null;
     userAfter.resetPasswordExpires = null;
     await userAfter.save();
-    console.log('   ✓ Password successfully reverted back to default "SuperAdmin@123".');
+    console.log('   ✓ Password successfully reverted back to default "Developer@123".');
 
     console.log('\n🎉 ALL PASSWORD RESET MODULE TESTS PASSED successfully!');
     await mongoose.disconnect();

@@ -21,7 +21,7 @@ const {
 router.use(authenticateJWT);
 
 // Restrict access: Employees are NOT allowed to access reports
-router.use(requireRole('superadmin', 'admin'));
+router.use(requireRole('developer', 'admin'));
 
 // Middleware to restrict Admins to only see reports from their own department
 const enforceAdminDepartmentFilter = (req, res, next) => {

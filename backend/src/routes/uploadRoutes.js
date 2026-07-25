@@ -19,10 +19,10 @@ const { uploadLimiter } = require('../middleware/rateLimiter');
 // All routes require JWT
 router.use(authenticateJWT);
 
-// POST /api/upload/project  — Admin / Super Admin upload 3D project files
+// POST /api/upload/project  — Admin / Developer upload 3D project files
 router.post(
   '/project',
-  requireRole('admin', 'superadmin'),
+  requireRole('admin', 'developer'),
   uploadLimiter,
   multerProject(),
   uploadProjectFile
@@ -31,10 +31,10 @@ router.post(
 // POST /api/upload/profile  — Any authenticated user uploads own profile photo
 router.post('/profile', uploadLimiter, multerProfile(), uploadProfilePhoto);
 
-// POST /api/upload/document  — Admin / Super Admin upload documents
+// POST /api/upload/document  — Admin / Developer upload documents
 router.post(
   '/document',
-  requireRole('admin', 'superadmin'),
+  requireRole('admin', 'developer'),
   uploadLimiter,
   multerDoc(),
   uploadDocument
@@ -46,7 +46,7 @@ router.get('/:id', getFileById);
 // GET /api/upload/:id/signed-url  — Generate time-limited signed URL (S3 private)
 router.get('/:id/signed-url', getSignedUrl);
 
-// DELETE /api/upload/:id  — Delete file (owner or superadmin)
+// DELETE /api/upload/:id  — Delete file (owner or developer)
 router.delete('/:id', deleteFile);
 
 module.exports = router;

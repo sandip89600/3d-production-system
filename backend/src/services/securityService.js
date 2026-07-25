@@ -77,7 +77,7 @@ class SecurityService {
       }
 
       // 3. Alert Level 4: New Device Login Alert (Classified as INFO / Login Notification)
-      if (success && (roleAttempted === 'admin' || roleAttempted === 'superadmin')) {
+      if (success && (roleAttempted === 'admin' || roleAttempted === 'developer')) {
         const prevSuccessCount = await LoginAttempt.countDocuments({
           email,
           success: true,
@@ -174,7 +174,7 @@ class SecurityService {
 
   async triggerFailedLoginAlert({ email, ipAddress, location, timestamp }) {
     logSecurity(`🚨 Brute Force Attack detected on ${email} (Account Locked)`, { email, ipAddress, location });
-    const superAdmins = await User.find({ role: 'superadmin', isActive: true });
+    const superAdmins = await User.find({ role: 'developer', isActive: true });
 
     // Format matches request specification
     const message = 
@@ -233,7 +233,7 @@ class SecurityService {
       type: 'security'
     });
 
-    const superAdmins = await User.find({ role: 'superadmin', isActive: true });
+    const superAdmins = await User.find({ role: 'developer', isActive: true });
     for (const admin of superAdmins) {
       await Notification.create({
         recipient: admin._id,
@@ -269,7 +269,7 @@ class SecurityService {
       type: 'security'
     });
 
-    const superAdmins = await User.find({ role: 'superadmin', isActive: true });
+    const superAdmins = await User.find({ role: 'developer', isActive: true });
     for (const admin of superAdmins) {
       await Notification.create({
         recipient: admin._id,
@@ -305,7 +305,7 @@ class SecurityService {
       type: 'payment'
     });
 
-    const staff = await User.find({ role: { $in: ['admin', 'superadmin'] }, isActive: true });
+    const staff = await User.find({ role: { $in: ['admin', 'developer'] }, isActive: true });
     for (const user of staff) {
       await Notification.create({
         recipient: user._id,

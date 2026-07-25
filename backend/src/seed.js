@@ -72,16 +72,16 @@ async function seed() {
     ]);
     console.log('📱 WhatsApp Groups seeded:', createdGroups.length);
 
-    // Create Super Admin
+    // Create Developer
     const superAdmin = await User.create({
       name: 'System Owner',
-      email: 'superadmin@all3dstudio.com',
-      password: 'SuperAdmin@123',
-      role: 'superadmin',
+      email: 'developer@all3dstudio.com',
+      password: 'Developer@123',
+      role: 'developer',
       isActive: true,
       mobile: '+919876543210',
     });
-    console.log('👑 Super Admin created:', superAdmin.email);
+    console.log('👑 Developer created:', superAdmin.email);
 
     // Create departments first (without admin)
     const createdDepts = await Department.insertMany(departments.map(d => ({ ...d })));
@@ -185,8 +185,8 @@ async function seed() {
     console.log('🎉 DATABASE SEEDED SUCCESSFULLY');
     console.log('═'.repeat(60));
     console.log('\n📋 LOGIN CREDENTIALS:\n');
-    console.log('👑 Super Admin:');
-    console.log('   Email: superadmin@all3dstudio.com | Password: SuperAdmin@123\n');
+    console.log('👑 Developer:');
+    console.log('   Email: developer@all3dstudio.com | Password: Developer@123\n');
     console.log('👤 Admins:');
     adminData.forEach(a => console.log(`   ${a.adminCode}: ${a.email} | Password: Admin@123`));
     console.log('\n👷 Employees:');

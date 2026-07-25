@@ -26,8 +26,8 @@ router.get('/employees', validateSearchQuery, searchEmployees);
 router.get('/departments', validateSearchQuery, searchDepartments);
 router.get('/notifications', validateSearchQuery, searchNotifications);
 
-// Activity log search — superadmin and admin only
-router.get('/activity', requireRole('superadmin', 'admin'), validateSearchQuery, searchActivity);
+// Activity log search — developer and admin only
+router.get('/activity', requireRole('developer', 'admin'), validateSearchQuery, searchActivity);
 
 // Suggestions — all roles
 router.get('/suggestions', getSuggestions);

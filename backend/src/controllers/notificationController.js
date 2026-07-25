@@ -137,7 +137,7 @@ const deleteOne = async (req, res) => {
   }
 };
 
-// POST /api/notifications/broadcast  (Super Admin only)
+// POST /api/notifications/broadcast  (Developer only)
 const broadcastAnnouncement = async (req, res) => {
   try {
     const result = await notificationService.broadcastAnnouncement(req.user._id, req.body);

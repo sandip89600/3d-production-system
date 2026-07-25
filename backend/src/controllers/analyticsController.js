@@ -6,8 +6,8 @@ const ActivityLog = require('../models/ActivityLog');
 const MessageLog = require('../models/MessageLog');
 const ProjectDownloadLog = require('../models/ProjectDownloadLog');
 
-// GET /api/analytics/overview — Super Admin
-// GET /api/analytics/overview — Super Admin
+// GET /api/analytics/overview — Developer
+// GET /api/analytics/overview — Developer
 const getOverview = async (req, res) => {
   try {
     const LoginLog = require('../models/LoginLog');
@@ -78,7 +78,7 @@ const getOverview = async (req, res) => {
       { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]);
 
-    // ─── Super Admin Workflow Analytics ──────────────────────────────────
+    // ─── Developer Workflow Analytics ──────────────────────────────────
     // 1. WhatsApp stats
     const totalWhatsAppSent = await MessageLog.countDocuments({ status: { $in: ['sent', 'delivered', 'read'] } });
     const totalWhatsAppDelivered = await MessageLog.countDocuments({ status: { $in: ['delivered', 'read'] } });

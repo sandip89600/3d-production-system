@@ -41,26 +41,26 @@ async function clearData() {
     await Promise.all(deleteCollections);
     console.log('🗑️ Projects, logs, and files deleted.');
 
-    // 2. Delete all users EXCEPT the Super Admin
-    // First, let's find the superadmin user to ensure they exist
-    let superAdmin = await User.findOne({ role: 'superadmin' });
+    // 2. Delete all users EXCEPT the Developer
+    // First, let's find the developer user to ensure they exist
+    let superAdmin = await User.findOne({ role: 'developer' });
     if (!superAdmin) {
-      // If super admin doesn't exist, recreate it
+      // If developer doesn't exist, recreate it
       superAdmin = await User.create({
         name: 'System Owner',
-        email: 'superadmin@all3dstudio.com',
-        password: 'SuperAdmin@123',
-        role: 'superadmin',
+        email: 'developer@all3dstudio.com',
+        password: 'Developer@123',
+        role: 'developer',
         isActive: true,
         mobile: '+919876543210',
       });
-      console.log('👑 Super Admin recreated:', superAdmin.email);
+      console.log('👑 Developer recreated:', superAdmin.email);
     }
 
     // Delete all other users
     const deleteResult = await User.deleteMany({ _id: { $ne: superAdmin._id } });
     console.log(`👤 Deleted ${deleteResult.deletedCount} dummy users (Admins, Employees, Clients).`);
-    console.log(`👑 Kept Super Admin user: ${superAdmin.email}`);
+    console.log(`👑 Kept Developer user: ${superAdmin.email}`);
 
     // 3. Clear admin and employee links in Departments
     await Department.updateMany({}, {

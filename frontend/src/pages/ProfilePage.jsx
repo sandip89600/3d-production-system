@@ -335,7 +335,7 @@ export default function ProfilePage() {
   }
 
   const roleLabels = {
-    superadmin: 'Developer',
+    developer: 'Developer',
     admin: 'Department Admin',
     employee: '3D Artist / Employee',
   };
@@ -424,7 +424,7 @@ export default function ProfilePage() {
               </div>
               <div className="bg-white/2 p-2.5 rounded-xl border border-white/5">
                 <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-0.5">Manager</p>
-                <p className="text-xs text-slate-300 truncate">{user.role === 'superadmin' ? 'N/A' : 'System Owner'}</p>
+                <p className="text-xs text-slate-300 truncate">{user.role === 'developer' ? 'N/A' : 'System Owner'}</p>
               </div>
             </div>
           </div>
@@ -664,8 +664,8 @@ export default function ProfilePage() {
                 </>
               )}
 
-              {/* Super Admin Dashboard Stats */}
-              {user.role === 'superadmin' && (
+              {/* Developer Dashboard Stats */}
+              {user.role === 'developer' && (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="glass-card p-5 border border-white/5 flex items-center gap-4">

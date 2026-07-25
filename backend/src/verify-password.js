@@ -11,18 +11,18 @@ async function verify() {
 
     const superAdmin = await User.findOne({ email: 'sandippandit896@gmail.com' }).select('+password');
     if (!superAdmin) {
-      console.log('❌ Super Admin not found!');
+      console.log('❌ Developer not found!');
       process.exit(1);
     }
 
-    const matches = await superAdmin.comparePassword('SuperAdmin@123');
-    console.log(`Password "SuperAdmin@123" matches database hash: ${matches}`);
+    const matches = await superAdmin.comparePassword('Developer@123');
+    console.log(`Password "Developer@123" matches database hash: ${matches}`);
 
     if (!matches) {
-      console.log('🔄 Password hash does not match. Resetting password to "SuperAdmin@123"...');
-      superAdmin.password = 'SuperAdmin@123';
+      console.log('🔄 Password hash does not match. Resetting password to "Developer@123"...');
+      superAdmin.password = 'Developer@123';
       await superAdmin.save();
-      console.log('✅ Password has been reset back to "SuperAdmin@123"');
+      console.log('✅ Password has been reset back to "Developer@123"');
     }
 
     await mongoose.disconnect();

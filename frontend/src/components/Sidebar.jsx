@@ -9,27 +9,27 @@ import {
 } from 'lucide-react';
 
 const superAdminNav = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/superadmin/dashboard' },
-  { label: 'All Projects', icon: FolderKanban, path: '/superadmin/projects' },
-  { label: 'Admin Management', icon: Users, path: '/superadmin/admins' },
-  { label: 'Client Management', icon: Users, path: '/superadmin/users' },
-  { label: 'Departments', icon: Building2, path: '/superadmin/departments' },
-  { label: 'Analytics', icon: BarChart3, path: '/superadmin/analytics' },
-  { label: 'Security & Logs', icon: Shield, path: '/superadmin/security' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/developer/dashboard' },
+  { label: 'All Projects', icon: FolderKanban, path: '/developer/projects' },
+  { label: 'Admin Management', icon: Users, path: '/developer/admins' },
+  { label: 'Client Management', icon: Users, path: '/developer/users' },
+  { label: 'Departments', icon: Building2, path: '/developer/departments' },
+  { label: 'Analytics', icon: BarChart3, path: '/developer/analytics' },
+  { label: 'Security & Logs', icon: Shield, path: '/developer/security' },
 ];
 
 const adminNav = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/superadmin/dashboard' },
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/developer/dashboard' },
   { label: 'Upload Project', icon: Upload, path: '/admin/upload' },
   { label: 'My Projects', icon: FolderKanban, path: '/admin/projects' },
-  { label: 'All Projects', icon: FolderKanban, path: '/superadmin/projects' },
+  { label: 'All Projects', icon: FolderKanban, path: '/developer/projects' },
   { label: 'Review Center', icon: ClipboardList, path: '/admin/review' },
   { label: 'Monitor Employees', icon: Eye, path: '/admin/employees' },
-  { label: 'Admin Management', icon: Users, path: '/superadmin/admins' },
-  { label: 'Client Management', icon: Users, path: '/superadmin/users' },
-  { label: 'Departments', icon: Building2, path: '/superadmin/departments' },
-  { label: 'Analytics', icon: BarChart3, path: '/superadmin/analytics' },
-  { label: 'Security & Logs', icon: Shield, path: '/superadmin/security' },
+  { label: 'Admin Management', icon: Users, path: '/developer/admins' },
+  { label: 'Client Management', icon: Users, path: '/developer/users' },
+  { label: 'Departments', icon: Building2, path: '/developer/departments' },
+  { label: 'Analytics', icon: BarChart3, path: '/developer/analytics' },
+  { label: 'Security & Logs', icon: Shield, path: '/developer/security' },
 ];
 
 const employeeNav = [
@@ -44,21 +44,21 @@ const clientNav = [
 ];
 
 const navMap = {
-  superadmin: superAdminNav,
+  developer: superAdminNav,
   admin: adminNav,
   employee: employeeNav,
   client: clientNav,
 };
 
 const roleColors = {
-  superadmin: 'from-purple-600 to-blue-600',
+  developer: 'from-purple-600 to-blue-600',
   admin: 'from-blue-600 to-cyan-600',
   employee: 'from-emerald-600 to-teal-600',
   client: 'from-amber-600 to-orange-600',
 };
 
 const roleLabels = {
-  superadmin: 'Developer',
+  developer: 'Developer',
   admin: 'Admin',
   employee: 'Employee',
   client: 'Client',

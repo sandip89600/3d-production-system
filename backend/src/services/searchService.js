@@ -12,7 +12,7 @@ class SearchService {
    * Build role-aware project match query
    */
   _projectAccessFilter(user) {
-    if (user.role === 'superadmin') return {};
+    if (user.role === 'developer') return {};
     if (user.role === 'admin') return { uploadedBy: new mongoose.Types.ObjectId(user._id) };
     // Employee: only their assigned projects
     return { assignedTo: new mongoose.Types.ObjectId(user._id) };
@@ -22,7 +22,7 @@ class SearchService {
    * Build role-aware user (employee) match query
    */
   _employeeAccessFilter(user) {
-    if (user.role === 'superadmin') return { role: 'employee' };
+    if (user.role === 'developer') return { role: 'employee' };
     if (user.role === 'admin') {
       // Admin sees employees in their department
       return {
@@ -274,11 +274,11 @@ class SearchService {
   async searchActivity(q, filters = {}, user, page = 1, limit = 10) {
     const { startDate, endDate, action, module: mod } = filters;
 
-    // Only super admin and admin can view activity logs
+    // Only developer and admin can view activity logs
     const match = {};
 
     // Admins and employees can only see their own logs
-    if (user.role !== 'superadmin') {
+    if (user.role !== 'developer') {
       match.user = new mongoose.Types.ObjectId(user._id);
     }
 

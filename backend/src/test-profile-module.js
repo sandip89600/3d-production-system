@@ -15,10 +15,10 @@ async function runTest() {
     await mongoose.connect(MONGO_URI);
     console.log('✅ Connected to MongoDB.');
 
-    const email = 'superadmin@all3dstudio.com';
-    const password = 'SuperAdmin@123';
+    const email = 'developer@all3dstudio.com';
+    const password = 'Developer@123';
 
-    console.log('\n--- 1. Logging in as Super Admin ---');
+    console.log('\n--- 1. Logging in as Developer ---');
     const loginRes = await axios.post(`${API_URL}/auth/login`, { email, password });
     const token = loginRes.data.accessToken;
     console.log('   ✓ Logged in. Token (shortened):', token.substring(0, 15) + '...');
@@ -97,7 +97,7 @@ async function runTest() {
     console.log('   ✓ Logs list count:', activityRes.data.activities.length);
 
     console.log('\n--- 7. Changing Password via Profile Settings ---');
-    const newPassword = 'NewSuperAdminSecure@123';
+    const newPassword = 'NewDeveloperSecure@123';
     const changePasswordRes = await axios.put(`${API_URL}/profile/change-password`, {
       currentPassword: password,
       newPassword: newPassword

@@ -9,13 +9,13 @@ async function check() {
     await mongoose.connect(MONGO_URI);
     console.log('Connected to MongoDB');
 
-    const superAdmin = await User.findOne({ email: 'superadmin@all3dstudio.com' }).select('+password +loginAttempts +lockUntil');
+    const superAdmin = await User.findOne({ email: 'developer@all3dstudio.com' }).select('+password +loginAttempts +lockUntil');
     if (!superAdmin) {
-      console.log('❌ Super Admin not found in the database!');
+      console.log('❌ Developer not found in the database!');
       process.exit(1);
     }
 
-    console.log('👑 Super Admin Status:');
+    console.log('👑 Developer Status:');
     console.log('─'.repeat(40));
     console.log(`Email: ${superAdmin.email}`);
     console.log(`Is Active: ${superAdmin.isActive}`);

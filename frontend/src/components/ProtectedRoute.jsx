@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../api';
 
 const roleRedirects = {
-  superadmin: '/superadmin/dashboard',
+  developer: '/developer/dashboard',
   admin: '/admin/dashboard',
   employee: '/employee/dashboard',
   client: '/client/dashboard',
@@ -12,7 +12,7 @@ const roleRedirects = {
 
 const getRedirectPath = (path) => {
   if (path.startsWith('/client') || path.startsWith('/dashboard')) return '/login';
-  if (path.startsWith('/superadmin')) return '/superadmin/login';
+  if (path.startsWith('/developer')) return '/developer/login';
   if (path.startsWith('/employee')) return '/employee/login';
   return '/admin/login';
 };

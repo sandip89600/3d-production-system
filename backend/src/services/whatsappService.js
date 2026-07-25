@@ -165,7 +165,7 @@ class WhatsAppService {
    */
   async notifyNewProject(project, uploader) {
     // Security Rule Check: Only Admins can trigger project upload notifications
-    if (uploader.role !== 'admin' && uploader.role !== 'superadmin') {
+    if (uploader.role !== 'admin' && uploader.role !== 'developer') {
       console.warn(`🔒 [Security Block] User ${uploader.name} (${uploader.role}) attempted to trigger project upload WhatsApp notification.`);
       return { success: false, error: 'Unauthorized: Only admins can send upload notifications' };
     }
@@ -180,7 +180,7 @@ class WhatsAppService {
     const categoryLabel = category === 'architecture' ? '3D Architecture' : 'Modeling & Rendering';
     const portalUrl = `${process.env.FRONTEND_URL || 'https://all3dstudio.deepitlabs.in'}/download-project/${project._id}`;
 
-    const uploaderRoleLabel = uploader.role === 'superadmin' ? 'Super Admin' : 'Admin';
+    const uploaderRoleLabel = uploader.role === 'developer' ? 'Developer' : 'Admin';
 
     const message = 
       `🚀 *New Project Uploaded*\n\n` +

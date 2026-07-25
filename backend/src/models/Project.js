@@ -49,7 +49,7 @@ projectSchema.pre('save', async function (next) {
       
       let adminCode = 'ADM';
       if (uploader) {
-        if (uploader.role === 'superadmin') {
+        if (uploader.role === 'developer') {
           adminCode = 'SUP';
         } else if (uploader.adminCode) {
           adminCode = uploader.adminCode.toUpperCase();

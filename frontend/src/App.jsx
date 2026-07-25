@@ -28,14 +28,14 @@ import ResetPasswordPage from './pages/admin/auth/ResetPasswordPage';
 import ResetSuccessPage from './pages/admin/auth/ResetSuccessPage';
 import EmailVerificationPage from './pages/admin/auth/EmailVerificationPage';
 
-// Super Admin Dashboards
-import SuperAdminDashboard from './pages/admin/superadmin/Dashboard';
-import AdminManagement from './pages/admin/superadmin/AdminManagement';
-import UserManagement from './pages/admin/superadmin/UserManagement';
-import DepartmentManagement from './pages/admin/superadmin/DepartmentManagement';
-import AllProjects from './pages/admin/superadmin/AllProjects';
-import SecurityLogs from './pages/admin/superadmin/SecurityLogs';
-import Analytics from './pages/admin/superadmin/Analytics';
+// Developer Dashboards
+import DeveloperDashboard from './pages/admin/developer/Dashboard';
+import AdminManagement from './pages/admin/developer/AdminManagement';
+import UserManagement from './pages/admin/developer/UserManagement';
+import DepartmentManagement from './pages/admin/developer/DepartmentManagement';
+import AllProjects from './pages/admin/developer/AllProjects';
+import SecurityLogs from './pages/admin/developer/SecurityLogs';
+import Analytics from './pages/admin/developer/Analytics';
 
 // Admin Dashboards
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -92,7 +92,7 @@ function App() {
             {/* Dedicated Staff Auth Portals */}
             <Route path="/employee/login" element={<PublicRoute><LoginPage portalRole="employee" /></PublicRoute>} />
             <Route path="/admin/login" element={<PublicRoute><LoginPage portalRole="admin" /></PublicRoute>} />
-            <Route path="/superadmin/login" element={<PublicRoute><LoginPage portalRole="superadmin" /></PublicRoute>} />
+            <Route path="/developer/login" element={<PublicRoute><LoginPage portalRole="developer" /></PublicRoute>} />
             <Route path="/staff/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
             <Route path="/admin/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
             <Route path="/admin/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
@@ -106,14 +106,14 @@ function App() {
             {/* Client (User) Protected Dashboard */}
             <Route path="/client/dashboard" element={<ProtectedRoute roles={['client']}><UserDashboard /></ProtectedRoute>} />
 
-            {/* Super Admin */}
-            <Route path="/superadmin/dashboard" element={<ProtectedRoute roles={['superadmin', 'admin']}><SuperAdminDashboard /></ProtectedRoute>} />
-            <Route path="/superadmin/admins" element={<ProtectedRoute roles={['superadmin', 'admin']}><AdminManagement /></ProtectedRoute>} />
-            <Route path="/superadmin/users" element={<ProtectedRoute roles={['superadmin', 'admin']}><UserManagement /></ProtectedRoute>} />
-            <Route path="/superadmin/departments" element={<ProtectedRoute roles={['superadmin', 'admin']}><DepartmentManagement /></ProtectedRoute>} />
-            <Route path="/superadmin/projects" element={<ProtectedRoute roles={['superadmin', 'admin']}><AllProjects /></ProtectedRoute>} />
-            <Route path="/superadmin/security" element={<ProtectedRoute roles={['superadmin', 'admin']}><SecurityLogs /></ProtectedRoute>} />
-            <Route path="/superadmin/analytics" element={<ProtectedRoute roles={['superadmin', 'admin']}><Analytics /></ProtectedRoute>} />
+            {/* Developer */}
+            <Route path="/developer/dashboard" element={<ProtectedRoute roles={['developer', 'admin']}><DeveloperDashboard /></ProtectedRoute>} />
+            <Route path="/developer/admins" element={<ProtectedRoute roles={['developer', 'admin']}><AdminManagement /></ProtectedRoute>} />
+            <Route path="/developer/users" element={<ProtectedRoute roles={['developer', 'admin']}><UserManagement /></ProtectedRoute>} />
+            <Route path="/developer/departments" element={<ProtectedRoute roles={['developer', 'admin']}><DepartmentManagement /></ProtectedRoute>} />
+            <Route path="/developer/projects" element={<ProtectedRoute roles={['developer', 'admin']}><AllProjects /></ProtectedRoute>} />
+            <Route path="/developer/security" element={<ProtectedRoute roles={['developer', 'admin']}><SecurityLogs /></ProtectedRoute>} />
+            <Route path="/developer/analytics" element={<ProtectedRoute roles={['developer', 'admin']}><Analytics /></ProtectedRoute>} />
 
             {/* Admin */}
             <Route path="/admin/dashboard" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />

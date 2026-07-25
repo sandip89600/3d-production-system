@@ -22,7 +22,7 @@ const getProfile = async (req, res) => {
 
     // Role-based statistics calculation
     let statistics = {};
-    if (user.role === 'superadmin') {
+    if (user.role === 'developer') {
       const [totalUsers, totalDepartments, totalProjects, systemActivityCount, securityLogsCount] = await Promise.all([
         User.countDocuments({}),
         Department.countDocuments({}),

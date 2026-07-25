@@ -18,14 +18,14 @@ async function runTest() {
     console.log('✅ Connected to MongoDB');
 
     // 1. Fetch Users
-    const superAdmin = await User.findOne({ role: 'superadmin' });
+    const superAdmin = await User.findOne({ role: 'developer' });
     const employee = await User.findOne({ role: 'employee' });
 
     if (!superAdmin || !employee) {
-      throw new Error('Required test users (superadmin and employee) not found in the DB. Please seed the DB first.');
+      throw new Error('Required test users (developer and employee) not found in the DB. Please seed the DB first.');
     }
 
-    console.log(`👤 Using Super Admin: ${superAdmin.name} (${superAdmin.email})`);
+    console.log(`👤 Using Developer: ${superAdmin.name} (${superAdmin.email})`);
     console.log(`👤 Using Employee: ${employee.name} (${employee.email})`);
 
     // 2. Fetch or verify groups
@@ -50,7 +50,7 @@ async function runTest() {
     await NotificationLog.deleteMany({});
     console.log('🧹 Cleaned test MessageLog and NotificationLog records.');
 
-    // 3. Test Category Detection & Project Upload Alert (Super Admin / Admin)
+    // 3. Test Category Detection & Project Upload Alert (Developer / Admin)
     console.log('\n--- Test 1: Project Uploads (Automatic Category Detection) ---');
     
     const archProject = new Project({

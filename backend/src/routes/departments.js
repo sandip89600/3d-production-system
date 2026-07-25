@@ -10,9 +10,9 @@ router.get('/public', getPublicDepartments);
 router.use(authenticateJWT);
 router.get('/', getDepartments);
 router.get('/:id', getDepartmentById);
-router.post('/', requireRole('superadmin', 'admin'), createDepartment);
-router.put('/:id', requireRole('superadmin', 'admin'), updateDepartment);
-router.post('/:id/employees', requireRole('superadmin', 'admin'), addEmployee);
-router.delete('/:id/employees/:employeeId', requireRole('superadmin', 'admin'), removeEmployee);
+router.post('/', requireRole('developer', 'admin'), createDepartment);
+router.put('/:id', requireRole('developer', 'admin'), updateDepartment);
+router.post('/:id/employees', requireRole('developer', 'admin'), addEmployee);
+router.delete('/:id/employees/:employeeId', requireRole('developer', 'admin'), removeEmployee);
 
 module.exports = router;

@@ -30,9 +30,9 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function SuperAdminDashboard() {
+export default function DeveloperDashboard() {
   const { data, isLoading } = useQuery({
-    queryKey: ['superadmin-overview'],
+    queryKey: ['developer-overview'],
     queryFn: () => analyticsAPI.getOverview().then(r => r.data),
     refetchInterval: 30000,
   });
@@ -63,7 +63,7 @@ export default function SuperAdminDashboard() {
 
   if (isLoading) {
     return (
-      <Layout title="Super Admin Dashboard" subtitle="Full system overview">
+      <Layout title="Developer Dashboard" subtitle="Full system overview">
         <div className="flex items-center justify-center h-64">
           <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
         </div>
@@ -72,7 +72,7 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <Layout title="Super Admin Dashboard" subtitle="Complete system overview & analytics">
+    <Layout title="Developer Dashboard" subtitle="Complete system overview & analytics">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard title="Total Projects" value={overview.totalProjects} icon={FolderKanban} color="blue" />

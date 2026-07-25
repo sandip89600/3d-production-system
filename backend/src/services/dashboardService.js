@@ -12,9 +12,9 @@ const ProjectDownloadLog = require('../models/ProjectDownloadLog');
 
 class DashboardService {
   /**
-   * Super Admin Dashboard Analytics
+   * Developer Dashboard Analytics
    */
-  async getSuperAdminDashboardData() {
+  async getDeveloperDashboardData() {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -123,7 +123,7 @@ class DashboardService {
     const failedLogins = await LoginLog.find({ status: 'failed' }).sort({ loginTime: -1 }).limit(5);
     const recentUploads = await UploadLog.find().sort({ uploadedAt: -1 }).limit(5).populate('userId', 'name').populate('projectId', 'name');
 
-    // ─── Super Admin Workflow Analytics ──────────────────────────────────
+    // ─── Developer Workflow Analytics ──────────────────────────────────
     // 1. WhatsApp stats
     const totalWhatsAppSent = await MessageLog.countDocuments({ status: { $in: ['sent', 'delivered', 'read'] } });
     const totalWhatsAppDelivered = await MessageLog.countDocuments({ status: { $in: ['delivered', 'read'] } });

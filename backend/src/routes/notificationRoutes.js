@@ -39,8 +39,8 @@ router.get('/search', validateNotificationFilters, searchNotifications);
 // PUT /api/notifications/read-all
 router.put('/read-all', markAllRead);
 
-// POST /api/notifications/broadcast — Super Admin only
-router.post('/broadcast', requireRole('superadmin', 'admin'), validateBroadcast, broadcastAnnouncement);
+// POST /api/notifications/broadcast — Developer only
+router.post('/broadcast', requireRole('developer', 'admin'), validateBroadcast, broadcastAnnouncement);
 
 // ── Parameterized routes ──────────────────────────────────────────
 

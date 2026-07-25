@@ -45,7 +45,7 @@ const validateNotificationFilters = (req, res, next) => {
 };
 
 /**
- * Validate broadcast announcement body (Super Admin only)
+ * Validate broadcast announcement body (Developer only)
  */
 const validateBroadcast = (req, res, next) => {
   const { title, message, priority } = req.body;

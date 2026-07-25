@@ -22,7 +22,7 @@ async function runTest() {
     console.log('✅ Connected to MongoDB');
 
     // Fetch users for logging check
-    const superAdmin = await User.findOne({ role: 'superadmin' });
+    const superAdmin = await User.findOne({ role: 'developer' });
     const employee = await User.findOne({ role: 'employee' });
 
     if (!superAdmin || !employee) {

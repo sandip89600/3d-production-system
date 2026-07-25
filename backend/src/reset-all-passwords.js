@@ -23,8 +23,8 @@ async function resetAndUnlockUsers() {
     for (let user of allUsers) {
       // Determine role-based default password
       let plainPassword = 'Admin@123'; // Default fallback
-      if (user.role === 'superadmin') {
-        plainPassword = 'SuperAdmin@123';
+      if (user.role === 'developer') {
+        plainPassword = 'Developer@123';
       } else if (user.role === 'admin') {
         plainPassword = 'Admin@123';
       } else if (user.role === 'employee') {

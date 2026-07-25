@@ -153,9 +153,9 @@ const getFileById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'File not found' });
     }
 
-    // Only uploader or admin/superadmin can view file details
+    // Only uploader or admin/developer can view file details
     const isOwner = String(fileRecord.uploadedBy._id) === String(req.user._id);
-    const isAdmin = ['admin', 'superadmin'].includes(req.user.role);
+    const isAdmin = ['admin', 'developer'].includes(req.user.role);
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
@@ -180,10 +180,10 @@ const deleteFile = async (req, res) => {
       return res.status(404).json({ success: false, message: 'File not found' });
     }
 
-    // Only uploader or superadmin can delete
+    // Only uploader or developer can delete
     const isOwner = String(fileRecord.uploadedBy._id) === String(req.user._id);
-    const isSuperAdmin = req.user.role === 'superadmin';
-    if (!isOwner && !isSuperAdmin) {
+    const isDeveloper = req.user.role === 'developer';
+    if (!isOwner && !isDeveloper) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 

@@ -16,15 +16,15 @@ async function runTest() {
     // 1. Fetch Admin Users
     const labAdmin = await User.findOne({ adminCode: 'LAB' });
     const rohAdmin = await User.findOne({ adminCode: 'ROH' });
-    const superAdmin = await User.findOne({ role: 'superadmin' });
+    const superAdmin = await User.findOne({ role: 'developer' });
 
     if (!labAdmin || !rohAdmin || !superAdmin) {
-      throw new Error('Required test users (LAB, ROH, superadmin) not found in DB. Run seed first.');
+      throw new Error('Required test users (LAB, ROH, developer) not found in DB. Run seed first.');
     }
 
     console.log(`👤 Found Admin LAB: ${labAdmin.name}`);
     console.log(`👤 Found Admin ROH: ${rohAdmin.name}`);
-    console.log(`👑 Found Super Admin: ${superAdmin.name}`);
+    console.log(`👑 Found Developer: ${superAdmin.name}`);
 
     const dept = await Department.findOne();
     if (!dept) throw new Error('No departments found. Seed database first.');
@@ -94,8 +94,8 @@ async function runTest() {
     if (rohProj2.projectId !== `ROH-${year}-002`) throw new Error(`Expected ROH-${year}-002, got ${rohProj2.projectId}`);
     console.log('✅ ROH Admin sequence successfully generated: 001 -> 002.');
 
-    // --- TEST 3: Super Admin Upload Fallback ---
-    console.log('\n--- Test 3: Super Admin Project ID (SUP Fallback) ---');
+    // --- TEST 3: Developer Upload Fallback ---
+    console.log('\n--- Test 3: Developer Project ID (SUP Fallback) ---');
     const supProj1 = await Project.create({
       name: 'General Showroom walkthrough',
       type: '3D architecture',
@@ -105,7 +105,7 @@ async function runTest() {
     });
     console.log(`   Saved: "${supProj1.name}" -> Project ID: ${supProj1.projectId}`);
     if (supProj1.projectId !== `SUP-${year}-001`) throw new Error(`Expected SUP-${year}-001, got ${supProj1.projectId}`);
-    console.log('✅ Super Admin fallback successfully generated: SUP-2026-001.');
+    console.log('✅ Developer fallback successfully generated: SUP-2026-001.');
 
     // --- TEST 4: Unique Constraints Enforcement ---
     console.log('\n--- Test 4: Uniqueness Validation ---');

@@ -11,12 +11,12 @@ const Notification = require('../models/Notification');
 router.use(authenticateJWT);
 
 // Analytics
-router.get('/overview', requireRole('superadmin', 'admin'), getOverview);
-router.get('/admin-performance', requireRole('superadmin', 'admin'), getAdminPerformance);
-router.get('/employee-performance', requireRole('superadmin', 'admin'), getEmployeePerformance);
-router.get('/department-performance', requireRole('superadmin', 'admin'), getDepartmentPerformance);
-router.get('/activity-logs', requireRole('superadmin', 'admin'), getActivityLogs);
-router.get('/admin-dashboard', requireRole('admin', 'superadmin'), getAdminDashboard);
+router.get('/overview', requireRole('developer', 'admin'), getOverview);
+router.get('/admin-performance', requireRole('developer', 'admin'), getAdminPerformance);
+router.get('/employee-performance', requireRole('developer', 'admin'), getEmployeePerformance);
+router.get('/department-performance', requireRole('developer', 'admin'), getDepartmentPerformance);
+router.get('/activity-logs', requireRole('developer', 'admin'), getActivityLogs);
+router.get('/admin-dashboard', requireRole('admin', 'developer'), getAdminDashboard);
 router.get('/employee-dashboard', requireRole('employee'), getEmployeeDashboard);
 router.get('/client-dashboard', requireRole('client'), getClientDashboard);
 
@@ -51,7 +51,7 @@ router.put('/notifications/read-all', async (req, res) => {
 });
 
 // WhatsApp database log
-router.get('/whatsapp-log', requireRole('superadmin', 'admin'), async (req, res) => {
+router.get('/whatsapp-log', requireRole('developer', 'admin'), async (req, res) => {
   try {
     const MessageLog = require('../models/MessageLog');
     const logs = await MessageLog.find()
