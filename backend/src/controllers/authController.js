@@ -875,7 +875,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   login, register, refresh, logout, getMe,
   setup2FA, verify2FA, disable2FA,
-  changePassword, updateProfile,
+  changePassword,
   forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword,
   verifyEmail, googleLogin, googleSignup
 };

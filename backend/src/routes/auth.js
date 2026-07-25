@@ -3,10 +3,11 @@ const router = express.Router();
 const {
   login, register, refresh, logout, getMe,
   setup2FA, verify2FA, disable2FA,
-  changePassword, updateProfile,
+  changePassword,
   forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword,
   verifyEmail, googleLogin, googleSignup
 } = require('../controllers/authController');
+const { updateProfile } = require('../controllers/profileController');
 const { authenticateJWT } = require('../middleware/auth');
 const { loginLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
