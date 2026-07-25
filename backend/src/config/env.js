@@ -6,13 +6,11 @@ const requiredEnv = [
   'JWT_REFRESH_SECRET',
 ];
 
-const productionRequiredEnv = [
-  'REDIS_URL',
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
-  'AWS_BUCKET_NAME',
-  'AWS_REGION',
-];
+// These are required only when specific features are enabled
+// REDIS_URL  → required if Redis caching is active (optional — falls back to in-memory)
+// AWS_*      → required only when STORAGE_PROVIDER=s3
+const productionRequiredEnv = [];
+
 
 const validateEnv = () => {
   const missing = [];

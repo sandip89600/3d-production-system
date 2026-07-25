@@ -12,7 +12,9 @@ const getRedisClient = () => {
     logger.info('🔌 Initializing Redis client using REDIS_URL');
     redisClient = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
+      lazyConnect: true,
       retryStrategy(times) {
+        if (times > 5) return null; // Stop retrying after 5 attempts
         const delay = Math.min(times * 100, 3000);
         return delay;
       }
@@ -24,7 +26,9 @@ const getRedisClient = () => {
       port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_PASSWORD || undefined,
       maxRetriesPerRequest: null,
+      lazyConnect: true,
       retryStrategy(times) {
+        if (times > 5) return null; // Stop retrying after 5 attempts
         const delay = Math.min(times * 100, 3000);
         return delay;
       }
