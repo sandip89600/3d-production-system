@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const loginLogSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+  userName: { type: String, default: '' },
   email: { type: String, required: true, index: true },
   role: { type: String, required: true },
   ipAddress: { type: String, default: null },
@@ -10,8 +11,13 @@ const loginLogSchema = new mongoose.Schema({
   logoutTime: { type: Date, default: null },
   sessionDuration: { type: Number, default: 0 }, // in seconds
   location: { type: String, default: 'Unknown' },
+  approximateLocation: { type: String, default: 'Unknown' },
   status: { type: String, enum: ['success', 'failed'], default: 'success' },
   deviceType: { type: String, default: 'desktop' },
+  device: { type: String, default: 'Unknown' },
+  browser: { type: String, default: 'Unknown' },
+  operatingSystem: { type: String, default: 'Unknown' },
+  loginMethod: { type: String, enum: ['credentials', 'google'], default: 'credentials' },
 }, {
   timestamps: true,
 });

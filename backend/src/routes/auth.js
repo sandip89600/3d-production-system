@@ -4,13 +4,18 @@ const {
   login, register, refresh, logout, getMe,
   setup2FA, verify2FA, disable2FA,
   changePassword, updateProfile,
-  forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword
+  forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword,
+  verifyEmail, googleLogin, googleSignup
 } = require('../controllers/authController');
 const { authenticateJWT } = require('../middleware/auth');
 const { loginLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
 router.post('/login', loginLimiter, login);
 router.post('/register', register);
+router.post('/signup', register); // Alias register as signup for frontend consistency
+router.post('/google/login', googleLogin);
+router.post('/google/signup', googleSignup);
+router.post('/verify-email', verifyEmail);
 router.post('/refresh', refresh);
 router.post('/logout', authenticateJWT, logout);
 router.get('/me', authenticateJWT, getMe);
@@ -21,6 +26,7 @@ router.post('/change-password', authenticateJWT, changePassword);
 router.put('/profile', authenticateJWT, updateProfile);
 
 router.post('/forgot-password/email', otpLimiter, forgotPasswordEmail);
+router.post('/forgot-password', otpLimiter, forgotPasswordEmail); // Alias forgot-password for consistent routing
 router.post('/forgot-password/mobile', otpLimiter, forgotPasswordMobile);
 router.post('/verify-otp', otpLimiter, verifyOTP);
 router.post('/reset-password', resetPassword);

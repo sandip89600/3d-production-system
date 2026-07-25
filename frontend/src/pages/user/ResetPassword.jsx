@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../../api';
-import { Eye, EyeOff, Lock, CheckCircle2, ShieldAlert, Boxes, Check, X, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, ShieldAlert, Boxes, Check, X, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ResetPassword() {
@@ -23,7 +23,7 @@ export default function ResetPassword() {
     { label: 'At least one uppercase letter (A-Z)', satisfied: /[A-Z]/.test(password) },
     { label: 'At least one lowercase letter (a-z)', satisfied: /[a-z]/.test(password) },
     { label: 'At least one number (0-9)', satisfied: /\d/.test(password) },
-    { label: 'At least one special character (@$!%*?&)', satisfied: /[@$!%*?&]/.test(password) },
+    { label: 'At least one special character (@$!%*?&#.-_)', satisfied: /[@$!%*?&#.\-_]/.test(password) },
   ];
 
   const allRequirementsMet = requirements.every(req => req.satisfied);

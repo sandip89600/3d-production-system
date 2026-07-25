@@ -26,6 +26,7 @@ import ForgotPasswordPage from './pages/admin/auth/ForgotPasswordPage';
 import VerifyOTPPage from './pages/admin/auth/VerifyOTPPage';
 import ResetPasswordPage from './pages/admin/auth/ResetPasswordPage';
 import ResetSuccessPage from './pages/admin/auth/ResetSuccessPage';
+import EmailVerificationPage from './pages/admin/auth/EmailVerificationPage';
 
 // Super Admin Dashboards
 import SuperAdminDashboard from './pages/admin/superadmin/Dashboard';
@@ -84,6 +85,7 @@ function App() {
             {/* Public Brand Auth Pages */}
             <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+            <Route path="/verify-email" element={<PublicRoute><EmailVerificationPage /></PublicRoute>} />
             <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 

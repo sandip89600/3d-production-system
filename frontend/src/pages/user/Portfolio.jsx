@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, Calendar, Compass, Layers, Monitor, HardDrive, User, ChevronRight } from 'lucide-react';
@@ -7,6 +7,8 @@ import BeforeAfterSlider from '../../components/public/BeforeAfterSlider';
 import SEO from '../../components/public/SEO';
 import { logEvent } from '../../utils/analytics';
 
+const filters = ['All', 'Architecture', 'Interior', 'Exterior', 'Modeling', 'Rendering', 'Animation'];
+
 export default function Portfolio() {
   const [searchParams, setSearchParams] = useSearchParams();
   const catParam = searchParams.get('cat');
@@ -14,10 +16,17 @@ export default function Portfolio() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
-  const [activeFilter, setActiveFilter] = useState('All');
-  const [selectedProject, setSelectedProject] = useState(null);
+  const activeFilter = (() => {
+    if (catParam) {
+      const filterName = catParam.charAt(0).toUpperCase() + catParam.slice(1).toLowerCase();
+      if (filters.includes(filterName)) {
+        return filterName;
+      }
+    }
+    return 'All';
+  })();
 
-  const filters = ['All', 'Architecture', 'Interior', 'Exterior', 'Modeling', 'Rendering', 'Animation'];
+
 
   const projects = [
     {
@@ -134,34 +143,27 @@ export default function Portfolio() {
     }
   ];
 
-  // Sync state with URL search params & dynamic URL slug
-  useEffect(() => {
-    if (catParam) {
-      // Capitalize first letter
-      const filterName = catParam.charAt(0).toUpperCase() + catParam.slice(1).toLowerCase();
-      if (filters.includes(filterName)) {
-        setActiveFilter(filterName);
-      }
-    }
+  const selectedProject = (() => {
     if (slug) {
-      const proj = projects.find(p => p.slug === slug);
-      if (proj) {
-        setSelectedProject(proj);
-      }
-    } else if (idParam) {
+      return projects.find(p => p.slug === slug) || null;
+    }
+    if (idParam) {
+      return projects.find(p => p.id === parseInt(idParam)) || null;
+    }
+    return null;
+  })();
+
+  // Legacy idParam redirect
+  useEffect(() => {
+    if (idParam && !slug) {
       const proj = projects.find(p => p.id === parseInt(idParam));
       if (proj) {
-        setSelectedProject(proj);
-        // Replace with clean SEO url
         navigate(`/portfolio/${proj.slug}`, { replace: true });
       }
-    } else {
-      setSelectedProject(null);
     }
-  }, [catParam, idParam, slug]);
+  }, [idParam, slug, navigate]);
 
   const handleFilterClick = (filter) => {
-    setActiveFilter(filter);
     if (filter === 'All') {
       setSearchParams({});
     } else {
@@ -170,7 +172,6 @@ export default function Portfolio() {
   };
 
   const openLightbox = (proj) => {
-    setSelectedProject(proj);
     logEvent('view_item', {
       item_id: proj.id,
       item_name: proj.title,
@@ -181,7 +182,6 @@ export default function Portfolio() {
   };
 
   const closeLightbox = () => {
-    setSelectedProject(null);
     navigate('/portfolio');
   };
 

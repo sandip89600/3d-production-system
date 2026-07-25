@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Compass, Eye, ShieldCheck, ArrowRight, Play, Sparkles, Building, Layers, Film, Box, Sofa, Milestone } from 'lucide-react';
+import { Compass, Eye, ArrowRight, Sparkles, Building, Layers, Film, Box, Sofa, Milestone } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
 import FloatingRenders from '../../components/public/FloatingRenders';
 import BeforeAfterSlider from '../../components/public/BeforeAfterSlider';

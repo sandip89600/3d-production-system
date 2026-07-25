@@ -26,7 +26,11 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('accessToken');
     if (!token) { setLoading(false); return; }
     try {
-      const { data } = await authAPI.getMe();
+      // 5-second timeout to avoid blocking if backend is unreachable
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 5000)
+      );
+      const { data } = await Promise.race([authAPI.getMe(), timeout]);
       setUser(data.user);
       connectSocket(data.user._id);
     } catch (err) {
@@ -34,6 +38,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
       }
+      // On timeout or any error, just clear loading — user stays null
     } finally {
       setLoading(false);
     }
@@ -57,6 +62,30 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (registerData) => {
     const { data } = await authAPI.register(registerData);
+    // Don't log in automatically if it needs email verification
+    if (data.message && data.message.includes('verify')) {
+      return { success: true, pendingVerification: true, message: data.message };
+    }
+    queryClient.clear();
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setUser(data.user);
+    connectSocket(data.user._id);
+    return { success: true, user: data.user };
+  };
+
+  const loginWithGoogle = async (credential) => {
+    const { data } = await authAPI.googleLogin(credential);
+    queryClient.clear();
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setUser(data.user);
+    connectSocket(data.user._id);
+    return { success: true, user: data.user };
+  };
+
+  const signupWithGoogle = async (credential) => {
+    const { data } = await authAPI.googleSignup(credential);
     queryClient.clear();
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
@@ -80,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (updates) => setUser(prev => ({ ...prev, ...updates }));
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser, socket, loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, loginWithGoogle, signupWithGoogle, logout, updateUser, socket, loadUser }}>
       {children}
     </AuthContext.Provider>
   );

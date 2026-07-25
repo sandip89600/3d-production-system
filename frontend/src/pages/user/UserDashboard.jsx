@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { analyticsAPI, projectsAPI } from '../../api';
 import api from '../../api/client';
 import Layout from '../../components/Layout';
 import StatsCard from '../../components/StatsCard';
 import { StatusBadge, ProgressBar } from '../../components/Badges';
-import { Upload, FolderKanban, CheckCircle2, Clock, AlertTriangle, FileText, Bell, Sparkles, Send, Download } from 'lucide-react';
+import { FolderKanban, CheckCircle2, Clock, AlertTriangle, FileText, Bell, Sparkles, Send, Download } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -20,7 +20,7 @@ export default function UserDashboard() {
   const [paying, setPaying] = useState(false);
 
   // 1. Fetch Client Dashboard Stats & Activity
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ['client-dashboard'],
     queryFn: () => analyticsAPI.getClientDashboard().then(r => r.data),
     refetchInterval: 30000,
@@ -71,7 +71,7 @@ export default function UserDashboard() {
 
     try {
       await createProjectMutation.mutateAsync(formData);
-    } catch (err) {
+    } catch {
       // handled by mutation onError
     } finally {
       setSubmitting(false);
@@ -105,7 +105,7 @@ export default function UserDashboard() {
   };
 
   // 4. Download Deliverable Handler (triggers secure signed URL generation)
-  const handleDownload = async (projectId, fileName) => {
+  const handleDownload = async (projectId) => {
     const downloadToast = toast.loading('Generating secure download link...');
     try {
       const res = await projectsAPI.getSecureDownloadUrl(projectId);
@@ -115,7 +115,7 @@ export default function UserDashboard() {
       } else {
         toast.error('Failed to get download URL.', { id: downloadToast });
       }
-    } catch (err) {
+    } catch {
       toast.error('Error generating download link.', { id: downloadToast });
     }
   };

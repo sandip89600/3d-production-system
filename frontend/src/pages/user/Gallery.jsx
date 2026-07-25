@@ -16,8 +16,6 @@ export default function Gallery() {
   const catParam = searchParams.get('cat');
   const idParam = searchParams.get('id');
 
-  const [activeFilter, setActiveFilter] = useState('All');
-  const [activeFilename, setActiveFilename] = useState(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(16);
@@ -41,39 +39,36 @@ export default function Gallery() {
     'Furniture'
   ];
 
+  // Derive active filename from ID param
+  const activeFilename = (() => {
+    if (idParam) {
+      const imgExists = allGalleryImages.some(img => img.id === idParam || img.filename === idParam);
+      if (imgExists) {
+        const targetImg = allGalleryImages.find(img => img.id === idParam || img.filename === idParam);
+        return targetImg.id;
+      }
+    }
+    return null;
+  })();
+
+  // Derive active filter from URL or selected image category
+  const activeFilter = (() => {
+    if (activeFilename) {
+      const img = allGalleryImages.find(i => i.id === activeFilename);
+      if (img) return img.category;
+    }
+    if (catParam) {
+      const match = filters.find(f => f.toLowerCase() === catParam.toLowerCase());
+      if (match) return match;
+    }
+    return 'All';
+  })();
+
   // Filter images based on selected category
   const filteredImages = allGalleryImages.filter(img => {
     if (activeFilter === 'All') return true;
     return img.category.toLowerCase() === activeFilter.toLowerCase();
   });
-
-  // Sync category state with query parameters
-  useEffect(() => {
-    if (catParam) {
-      const match = filters.find(f => f.toLowerCase() === catParam.toLowerCase());
-      if (match) {
-        setActiveFilter(match);
-      }
-    }
-  }, [catParam]);
-
-  // Sync active filename with ID param if present
-  useEffect(() => {
-    if (idParam) {
-      const imgExists = allGalleryImages.some(img => img.id === idParam || img.filename === idParam);
-      if (imgExists) {
-        const targetImg = allGalleryImages.find(img => img.id === idParam || img.filename === idParam);
-        setActiveFilename(targetImg.id);
-        
-        // Auto-select category of this image so the layout matches context
-        if (targetImg && activeFilter !== 'All' && activeFilter.toLowerCase() !== targetImg.category.toLowerCase()) {
-          setActiveFilter(targetImg.category);
-        }
-      }
-    } else {
-      setActiveFilename(null);
-    }
-  }, [idParam]);
 
   // Keyboard listeners for lightbox
   useEffect(() => {
@@ -88,8 +83,7 @@ export default function Gallery() {
   }, [activeFilename, filteredImages]);
 
   // Close full-screen lightbox
-  const closeLightbox = () => {
-    setActiveFilename(null);
+  function closeLightbox() {
     setZoomScale(1);
     
     // Remove ID query param while maintaining category
@@ -101,11 +95,10 @@ export default function Gallery() {
       document.exitFullscreen().catch(() => {});
     }
     setIsFullscreen(false);
-  };
+  }
 
   // Open lightbox
-  const openLightbox = (id) => {
-    setActiveFilename(id);
+  function openLightbox(id) {
     setZoomScale(1);
     
     const params = new URLSearchParams(searchParams);
@@ -117,28 +110,28 @@ export default function Gallery() {
     }
     
     setSearchParams(params);
-  };
+  }
 
   // Switch index relative to current filtered view
-  const getIndex = () => {
+  function getIndex() {
     return filteredImages.findIndex(img => img.id === activeFilename);
-  };
+  }
 
-  const nextSlide = () => {
+  function nextSlide() {
     if (filteredImages.length === 0) return;
     setZoomScale(1);
     const currIdx = getIndex();
     const nextIdx = (currIdx + 1) % filteredImages.length;
     openLightbox(filteredImages[nextIdx].id);
-  };
+  }
 
-  const prevSlide = () => {
+  function prevSlide() {
     if (filteredImages.length === 0) return;
     setZoomScale(1);
     const currIdx = getIndex();
     const prevIdx = (currIdx - 1 + filteredImages.length) % filteredImages.length;
     openLightbox(filteredImages[prevIdx].id);
-  };
+  }
 
   // Zoom management
   const zoomIn = () => setZoomScale(prev => Math.min(prev + 0.25, 3));
@@ -175,7 +168,6 @@ export default function Gallery() {
   };
 
   const handleFilterClick = (filter) => {
-    setActiveFilter(filter);
     setVisibleCount(16); // reset loaded items count
     
     const params = new URLSearchParams(searchParams);

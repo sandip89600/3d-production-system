@@ -1,19 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff, Lock, Mail, ShieldAlert, Boxes, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, Boxes, ArrowRight, ArrowLeft } from 'lucide-react';
 import SEO from '../../components/public/SEO';
+import GoogleAuthButton from '../../components/public/GoogleAuthButton';
 import toast from 'react-hot-toast';
 
-const roleRedirects = {
-  superadmin: '/superadmin/dashboard',
-  admin: '/admin/dashboard',
-  employee: '/employee/dashboard',
-  client: '/dashboard',
-};
-
 export default function Login() {
-  const { login, logout } = useAuth();
+  const { login, loginWithGoogle, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,6 +40,30 @@ export default function Login() {
       navigate(fromPath, { replace: true });
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Please verify credentials.';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    setLoading(true);
+    try {
+      const result = await loginWithGoogle(credential);
+      const userRole = result.user?.role;
+
+      if (userRole !== 'client') {
+        await logout();
+        toast.error(`Staff detected. Please login at the dedicated /${userRole}/login portal.`);
+        setLoading(false);
+        return;
+      }
+
+      toast.success(`Welcome back, ${result.user?.name?.split(' ')[0] || 'User'}! 👋`);
+      const fromPath = location.state?.from?.pathname || '/dashboard';
+      navigate(fromPath, { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Google login failed.';
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -180,22 +198,7 @@ export default function Login() {
               <div className="flex-grow border-t border-slate-850"></div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900 border border-slate-850 rounded-xl text-xs font-semibold text-slate-350 hover:bg-slate-850 hover:text-white transition-colors cursor-pointer"
-              >
-                <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" x2="12" y1="8" y2="8"/><line x1="3.95" x2="8.54" y1="6.06" y2="14"/><line x1="16.24" x2="7.05" y1="19.18" y2="19.18"/></svg>
-                <span>Google</span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-900 border border-slate-850 rounded-xl text-xs font-semibold text-slate-350 hover:bg-slate-850 hover:text-white transition-colors cursor-pointer"
-              >
-                <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.57 2.95-1.39"/></svg>
-                <span>Apple</span>
-              </button>
-            </div>
+            <GoogleAuthButton onSuccess={handleGoogleSuccess} text="continue_with" />
 
           </form>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api';
-import { Mail, Phone, Lock, Boxes, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Mail, Phone, Lock, Boxes, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ForgotPassword() {
@@ -18,13 +18,14 @@ export default function ForgotPassword() {
     setLoading(true);
     try {
       if (method === 'email') {
-        await authAPI.forgotPasswordEmail(inputValue);
-        toast.success('Reset OTP sent to your email! Check spam/inbox.');
+        await authAPI.forgotPassword(inputValue);
+        toast.success('Reset link sent to your email! Check spam/inbox.');
+        setOtpSent(true);
       } else {
         await authAPI.forgotPasswordMobile(inputValue);
         toast.success('Reset OTP sent to your mobile number!');
+        setOtpSent(true);
       }
-      setOtpSent(true);
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to dispatch reset request.';
       toast.error(msg);
@@ -51,8 +52,19 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center pt-24 pb-16 px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center pt-24 pb-16 px-6 relative overflow-hidden">
       
+      {/* Floating Back to Home Button */}
+      <div className="absolute top-6 left-6 z-20">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-850 border border-slate-850 px-4 py-2.5 rounded-xl transition-all duration-300 backdrop-blur-sm"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Login</span>
+        </Link>
+      </div>
+
       {/* Background decorations */}
       <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] rounded-full bg-amber-500/5 blur-[90px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] rounded-full bg-blue-500/5 blur-[80px] pointer-events-none" />
@@ -66,14 +78,14 @@ export default function ForgotPassword() {
           </Link>
           <h2 className="text-2xl font-black text-white tracking-tight">Recovery Services</h2>
           <p className="text-xs text-slate-450 mt-1">
-            {!otpSent ? 'Enter details to receive security credentials' : 'Verify OTP details to configure credentials'}
+            {!otpSent ? 'Enter details to receive security credentials' : 'Verify security details to configure credentials'}
           </p>
         </div>
 
         {/* Card */}
         <div className="bg-[#0b101c]/80 backdrop-blur-md border border-slate-800 rounded-3xl p-8 shadow-2xl">
           {!otpSent ? (
-            <form onSubmit={handleSendOTP} className="flex flex-col gap-5.5">
+            <form onSubmit={handleSendOTP} className="flex flex-col gap-4">
               
               {/* Toggle Method */}
               <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-900">
@@ -114,7 +126,7 @@ export default function ForgotPassword() {
                     placeholder={method === 'email' ? 'e.g. client@domain.com' : 'e.g. +919876543210'}
                     value={inputValue}
                     onChange={e => setInputValue(e.target.value)}
-                    className="w-full bg-slate-900/40 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-colors"
+                    className="w-full bg-slate-900/40 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-650 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                 </div>
               </div>
@@ -123,30 +135,47 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mt-1 cursor-pointer active:scale-98"
+                className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mt-1 cursor-pointer"
               >
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                    <span>Dispatching OTP...</span>
+                    <span>Sending...</span>
                   </>
                 ) : (
                   <>
-                    <span>Send Verification Code</span>
+                    <span>Send Reset Request</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
 
             </form>
+          ) : method === 'email' ? (
+            <div className="flex flex-col items-center py-4 text-center">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-6">
+                <ShieldCheck className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Recovery Email Sent</h3>
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                We've sent a secure password recovery link to <strong>{inputValue}</strong>. Please check your inbox and click the link to reset your credentials.
+              </p>
+              <button
+                type="button"
+                onClick={() => setOtpSent(false)}
+                className="text-center text-xs text-slate-500 hover:text-slate-350 transition-colors py-1 font-semibold cursor-pointer"
+              >
+                ← Back & Change Email
+              </button>
+            </div>
           ) : (
-            <form onSubmit={handleVerifyOTP} className="flex flex-col gap-5.5">
+            <form onSubmit={handleVerifyOTP} className="flex flex-col gap-4">
               
               {/* Success Notification Alert */}
               <div className="flex gap-3 bg-emerald-950/20 border border-emerald-900/30 p-4 rounded-2xl text-emerald-450 text-xs leading-relaxed">
                 <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold">Code Dispatched!</p>
+                  <p className="font-bold text-white">Code Dispatched!</p>
                   <p className="text-slate-400">Please enter the 6-digit OTP code sent to <strong>{inputValue}</strong>.</p>
                 </div>
               </div>
@@ -169,7 +198,7 @@ export default function ForgotPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold py-3.5 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mt-1 cursor-pointer active:scale-98"
+                className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 mt-1 cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -187,9 +216,9 @@ export default function ForgotPassword() {
               <button
                 type="button"
                 onClick={() => setOtpSent(false)}
-                className="text-center text-xs text-slate-500 hover:text-slate-300 transition-colors py-1 font-semibold cursor-pointer"
+                className="text-center text-xs text-slate-500 hover:text-slate-350 transition-colors py-1 font-semibold cursor-pointer"
               >
-                Change Email / Number
+                Change Number
               </button>
 
             </form>

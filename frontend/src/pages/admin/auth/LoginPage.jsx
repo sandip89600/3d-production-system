@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { Eye, EyeOff, Boxes, Shield, Zap, Lock } from 'lucide-react';
+import GoogleAuthButton from '../../../components/public/GoogleAuthButton';
 import toast from 'react-hot-toast';
 
 const roleRedirects = {
@@ -29,7 +30,7 @@ const portalDetails = {
 };
 
 export default function LoginPage({ portalRole = 'employee' }) {
-  const { login, logout } = useAuth();
+  const { login, loginWithGoogle, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -65,6 +66,30 @@ export default function LoginPage({ portalRole = 'employee' }) {
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Check your credentials.';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    setLoading(true);
+    try {
+      const result = await loginWithGoogle(credential);
+      const userRole = result.user?.role;
+
+      if (userRole !== portalRole) {
+        await logout();
+        toast.error(`Invalid login. This portal is for ${details.title} users only.`);
+        setLoading(false);
+        return;
+      }
+
+      toast.success(`Welcome back, ${result.user?.name?.split(' ')[0]}! 👋`);
+      const fromPath = location.state?.from?.pathname || roleRedirects[userRole] || '/';
+      navigate(fromPath, { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Google login failed.';
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -220,6 +245,17 @@ export default function LoginPage({ portalRole = 'employee' }) {
               )}
             </button>
           </form>
+
+          {portalRole !== 'superadmin' && (
+            <>
+              <div className="relative flex py-4 items-center">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="flex-shrink mx-4 text-slate-500 text-xs uppercase font-medium">Or</span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div>
+              <GoogleAuthButton onSuccess={handleGoogleSuccess} text="continue_with" />
+            </>
+          )}
 
           {/* Footer actions */}
           {portalRole !== 'superadmin' && (

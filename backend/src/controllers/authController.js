@@ -3,6 +3,7 @@ const qrcode = require('qrcode');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const https = require('https');
 const User = require('../models/User');
 const Department = require('../models/Department');
 const ActivityLog = require('../models/ActivityLog');
@@ -12,11 +13,69 @@ const emailService = require('../services/emailService');
 const twilio = require('twilio');
 const securityService = require('../services/securityService');
 
+// User-Agent parser utility
+const parseUserAgent = (uaStr = '') => {
+  const ua = uaStr.toLowerCase();
+  let browser = 'Unknown';
+  let os = 'Unknown';
+  let device = 'Desktop';
+
+  // Browser detection
+  if (ua.includes('firefox')) browser = 'Firefox';
+  else if (ua.includes('chrome') && !ua.includes('chromium')) browser = 'Chrome';
+  else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari';
+  else if (ua.includes('edge') || ua.includes('edg')) browser = 'Edge';
+  else if (ua.includes('opera') || ua.includes('opr')) browser = 'Opera';
+
+  // OS detection
+  if (ua.includes('android')) os = 'Android';
+  else if (ua.includes('iphone') || ua.includes('ipad')) os = 'iOS';
+  else if (ua.includes('windows')) os = 'Windows';
+  else if (ua.includes('macintosh') || ua.includes('mac os')) os = 'macOS';
+  else if (ua.includes('linux')) os = 'Linux';
+
+  // Device type detection
+  if (ua.includes('tablet') || ua.includes('ipad')) device = 'Tablet';
+  else if (ua.includes('mobi') || ua.includes('android') || ua.includes('iphone')) device = 'Mobile';
+
+  return { browser, os, device };
+};
+
 const getDeviceType = (userAgent = '') => {
-  const ua = userAgent.toLowerCase();
-  if (ua.includes('tablet') || ua.includes('ipad')) return 'tablet';
-  if (ua.includes('mobi') || ua.includes('android') || ua.includes('iphone') || ua.includes('ipod')) return 'mobile';
-  return 'desktop';
+  return parseUserAgent(userAgent).device;
+};
+
+// Disposable Email check
+const DISPOSABLE_DOMAINS = [
+  'mailinator.com', 'yopmail.com', 'tempmail.com', '10minutemail.com',
+  'sharklasers.com', 'guerrillamail.com', 'dispostable.com', 'getairmail.com',
+  'burnermail.io', 'trashmail.com'
+];
+const isDisposableEmail = (email = '') => {
+  const domain = email.toLowerCase().split('@')[1];
+  return DISPOSABLE_DOMAINS.includes(domain);
+};
+
+// Google ID token verification helper
+const fetchGoogleTokenInfo = (idToken) => {
+  return new Promise((resolve, reject) => {
+    https.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (res.statusCode === 200) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.error_description || 'Failed to verify Google token'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', (err) => reject(err));
+  });
 };
 
 const sendSMS = async (to, content) => {
@@ -55,7 +114,7 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password required' });
     }
 
-    const user = await User.findOne({ email }).select('+password +twoFactorSecret +loginAttempts +lockUntil +refreshTokens');
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password +failedLoginAttempts +accountLockedUntil +refreshTokens');
     if (!user) {
       await ActivityLog.create({ userEmail: email, action: 'login_failed', success: false, details: { reason: 'User not found' }, ip: req.ip });
       await LoginLog.create({
@@ -91,10 +150,15 @@ const login = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Account is deactivated.' });
     }
 
+    // Force Email Verification
+    if (!user.emailVerified) {
+      return res.status(403).json({ success: false, message: 'Please verify your email address before logging in.' });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       await user.incLoginAttempts();
-      await ActivityLog.create({ user: user._id, userEmail: email, action: 'login_failed', success: false, details: { attempts: user.loginAttempts + 1 }, ip: req.ip });
+      await ActivityLog.create({ user: user._id, userEmail: email, action: 'login_failed', success: false, details: { attempts: user.failedLoginAttempts + 1 }, ip: req.ip });
       await LoginLog.create({
         userId: user._id,
         email: user.email,
@@ -126,7 +190,16 @@ const login = async (req, res) => {
     }
 
     await user.resetLoginAttempts();
-    await user.updateOne({ lastLoginIP: req.ip });
+    
+    // Parse UA metrics
+    const ua = parseUserAgent(req.headers['user-agent']);
+
+    await user.updateOne({ 
+      lastLoginIP: req.ip,
+      lastLogin: new Date(),
+      lastDevice: req.headers['user-agent'],
+      loginMethod: 'credentials'
+    });
 
     const { accessToken, refreshToken } = generateTokens(user._id, user.role);
 
@@ -142,13 +215,19 @@ const login = async (req, res) => {
 
     await LoginLog.create({
       userId: user._id,
+      userName: user.name,
       email: user.email,
       role: user.role,
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
       loginTime: new Date(),
       status: 'success',
-      deviceType: getDeviceType(req.headers['user-agent']),
+      deviceType: ua.device,
+      device: ua.device,
+      browser: ua.browser,
+      operatingSystem: ua.os,
+      loginMethod: 'credentials',
+      approximateLocation: 'Local Host',
     });
 
     await securityService.logLoginAttempt({
@@ -160,6 +239,18 @@ const login = async (req, res) => {
       userId: user._id,
       name: user.name
     });
+
+    // Trigger Security Login Alert Email
+    await emailService.sendLoginAlertEmail(user.email, user.name, {
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+      time: new Date().toLocaleTimeString('en-IN'),
+      device: ua.device,
+      os: ua.os,
+      browser: ua.browser,
+      ip: req.ip,
+      role: user.role,
+      location: 'Local Network'
+    }).catch(err => console.error('Failed to send login alert:', err.message));
 
     const userObj = user.toJSON();
     res.json({
@@ -173,6 +264,247 @@ const login = async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
+};
+
+// POST /api/auth/register (acting as Client public signup)
+const register = async (req, res) => {
+  try {
+    const { name, email, password, role, department, adminCode, companyName, mobile } = req.body;
+    
+    // Enforcement: public signup should always register client roles
+    const targetRole = role || 'client';
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+
+    // Email format checks
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email address format' });
+    }
+
+    // Disposable email check
+    if (isDisposableEmail(email)) {
+      return res.status(400).json({ success: false, message: 'Disposable email providers are not allowed' });
+    }
+
+    // Password strength check
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#.\-_])[A-Za-z\d@$!%*?&#.\-_]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#.-_).'
+      });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email is already registered' });
+    }
+
+    // Department rules: Only employees belong to departments!
+    if (targetRole !== 'employee' && department) {
+      return res.status(400).json({ success: false, message: 'Only employees belong to departments.' });
+    }
+    if (targetRole === 'employee' && !department) {
+      return res.status(400).json({ success: false, message: 'Department selection is mandatory for employees.' });
+    }
+
+    // Generate Verification Token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    const user = new User({
+      name,
+      email: email.toLowerCase(),
+      password,
+      role: targetRole,
+      department: targetRole === 'employee' ? department : undefined,
+      adminCode: targetRole === 'admin' ? adminCode?.toUpperCase() : undefined,
+      companyName: targetRole === 'client' ? companyName : undefined,
+      mobile: mobile || undefined,
+      isActive: true,
+      emailVerified: false,
+      verificationToken,
+      verificationTokenExpires,
+      loginMethod: 'credentials'
+    });
+
+    await user.save();
+
+    // If employee, add to department roster
+    if (targetRole === 'employee' && department) {
+      await Department.findByIdAndUpdate(department, {
+        $addToSet: { employees: user._id }
+      });
+    }
+
+    await ActivityLog.create({
+      user: user._id, userEmail: user.email, userRole: user.role,
+      action: 'register_pending_verification', success: true, ip: req.ip, userAgent: req.headers['user-agent'],
+    });
+
+    // Send Verification Email
+    await emailService.sendVerificationEmail(user.email, user.name, verificationToken)
+      .catch(err => console.error('Verification email trigger failed:', err.message));
+
+    res.status(201).json({
+      success: true,
+      message: 'Account created! Please check your email to verify your account before logging in.'
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+  }
+};
+
+// POST /api/auth/verify-email
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Verification token is required.' });
+    }
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Verification token is invalid or has expired.' });
+    }
+
+    user.emailVerified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpires = null;
+    await user.save();
+
+    await ActivityLog.create({
+      user: user._id, userEmail: user.email, userRole: user.role,
+      action: 'email_verified', success: true, ip: req.ip
+    });
+
+    // Send welcome email
+    await emailService.sendWelcomeEmail(user.email, user.name, user.companyName)
+      .catch(err => console.error('Welcome email trigger failed:', err.message));
+
+    res.json({ success: true, message: 'Email verified successfully! You can now log in.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
+  }
+};
+
+// POST /api/auth/google/login
+const googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ success: false, message: 'Google credential token is required' });
+    }
+
+    // Decode / verify Google JWT token
+    const payload = await fetchGoogleTokenInfo(credential);
+    if (!payload || !payload.email) {
+      return res.status(400).json({ success: false, message: 'Invalid Google identity token' });
+    }
+
+    const email = payload.email.toLowerCase();
+    let user = await User.findOne({ email });
+
+    // Handle Google account creation on first-time login
+    if (!user) {
+      user = new User({
+        name: payload.name,
+        email,
+        googleId: payload.sub,
+        profilePhoto: payload.picture,
+        isGoogleAccount: true,
+        emailVerified: true, // auto-verified via google oauth
+        role: 'client',
+        loginMethod: 'google',
+        isActive: true,
+      });
+      await user.save();
+
+      // Trigger Welcome Email
+      await emailService.sendWelcomeEmail(user.email, user.name, '')
+        .catch(err => console.error('Welcome email failed:', err.message));
+    } else {
+      // Disallow Google login for Super Admins unless specifically enabled
+      if (user.role === 'superadmin') {
+        return res.status(403).json({ success: false, message: 'Google Authentication is disabled for Super Admins.' });
+      }
+
+      // Sync Google parameters
+      user.googleId = payload.sub;
+      user.isGoogleAccount = true;
+      user.emailVerified = true;
+      if (!user.profilePhoto) user.profilePhoto = payload.picture;
+      user.loginMethod = 'google';
+      user.lastLogin = new Date();
+      user.lastLoginIP = req.ip;
+      user.lastDevice = req.headers['user-agent'];
+      await user.save();
+    }
+
+    // Generate JWT & session logs
+    const { accessToken, refreshToken } = generateTokens(user._id, user.role);
+
+    await User.findByIdAndUpdate(user._id, {
+      $push: { refreshTokens: { $each: [refreshToken], $slice: -5 } },
+    });
+
+    const ua = parseUserAgent(req.headers['user-agent']);
+
+    await LoginLog.create({
+      userId: user._id,
+      userName: user.name,
+      email: user.email,
+      role: user.role,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      loginTime: new Date(),
+      status: 'success',
+      deviceType: ua.device,
+      device: ua.device,
+      browser: ua.browser,
+      operatingSystem: ua.os,
+      loginMethod: 'google',
+      approximateLocation: 'Local Host',
+    });
+
+    // Send security alert
+    await emailService.sendLoginAlertEmail(user.email, user.name, {
+      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+      time: new Date().toLocaleTimeString('en-IN'),
+      device: ua.device,
+      os: ua.os,
+      browser: ua.browser,
+      ip: req.ip,
+      role: user.role,
+      location: 'Local Network'
+    }).catch(err => console.error('Failed to send login alert:', err.message));
+
+    const userObj = user.toJSON();
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      accessToken,
+      refreshToken,
+      user: userObj
+    });
+  } catch (error) {
+    console.error('Google Auth login error:', error);
+    res.status(500).json({ success: false, message: 'Google Auth Error: ' + error.message });
+  }
+};
+
+// POST /api/auth/google/signup
+const googleSignup = async (req, res) => {
+  // Aliased to googleLogin since OAuth behaves identically for login/signup flows
+  return googleLogin(req, res);
 };
 
 // POST /api/auth/refresh
@@ -326,6 +658,16 @@ const disable2FA = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    
+    // Strict password policy validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#.\-_])[A-Za-z\d@$!%*?&#.\-_]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&#.-_).'
+      });
+    }
+
     const user = await User.findById(req.user._id).select('+password');
 
     const isMatch = await user.comparePassword(currentPassword);
@@ -334,8 +676,14 @@ const changePassword = async (req, res) => {
     }
 
     user.password = newPassword;
+    user.passwordChangedAt = new Date();
     await user.save();
+    
     await logActivity(req, 'password_change');
+
+    // Trigger Password Changed Confirmation Email
+    await emailService.sendPasswordChangedEmail(user.email, user.name)
+      .catch(err => console.error('Password changed confirmation failed:', err.message));
 
     res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
@@ -343,94 +691,9 @@ const changePassword = async (req, res) => {
   }
 };
 
-// POST /api/auth/register
-const register = async (req, res) => {
-  try {
-    const { name, email, password, role, department, adminCode, companyName, mobile } = req.body;
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ success: false, message: 'All fields (name, email, password, role) are required' });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email is already registered' });
-    }
-
-    // Determine createdBy, defaults to self (or null), isActive defaults to true, etc.
-    const user = new User({
-      name,
-      email,
-      password,
-      role,
-      department: role === 'employee' ? department : undefined,
-      adminCode: role === 'admin' ? adminCode?.toUpperCase() : undefined,
-      companyName: role === 'client' ? companyName : undefined,
-      mobile: mobile || undefined,
-      isActive: true
-    });
-
-    await user.save();
-
-    // If employee, also update the Department to include this employee
-    if (role === 'employee' && department) {
-      await Department.findByIdAndUpdate(department, {
-        $addToSet: { employees: user._id }
-      });
-    }
-
-    // Generate tokens and log in the user immediately
-    const { accessToken, refreshToken } = generateTokens(user._id, user.role);
-
-    // Store refresh token
-    await User.findByIdAndUpdate(user._id, {
-      $push: { refreshTokens: { $each: [refreshToken], $slice: -5 } },
-    });
-
-    await ActivityLog.create({
-      user: user._id, userEmail: user.email, userRole: user.role,
-      action: 'register', success: true, ip: req.ip, userAgent: req.headers['user-agent'],
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful',
-      accessToken,
-      refreshToken,
-      user
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ success: false, message: 'Server error: ' + error.message });
-  }
-};
-
-const updateProfile = async (req, res) => {
-  try {
-    const { name, email } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ success: false, message: 'Name and email are required' });
-    }
-
-    const existing = await User.findOne({ email: email.toLowerCase(), _id: { $ne: req.user._id } });
-    if (existing) {
-      return res.status(400).json({ success: false, message: 'Email is already in use' });
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, email: email.toLowerCase() },
-      { new: true, runValidators: true }
-    ).populate('department', 'name code');
-
-    await logActivity(req, 'profile_update', `Updated own profile: ${user.name}`);
-    res.json({ success: true, message: 'Profile updated successfully', user });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 const redisService = require('../services/redisService');
 
+// POST /api/auth/forgot-password (acts as email OTP request link generator)
 const forgotPasswordEmail = async (req, res) => {
   try {
     const { email } = req.body;
@@ -443,20 +706,20 @@ const forgotPasswordEmail = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email address not registered.' });
     }
 
-    const otpVal = crypto.randomInt(100000, 999999).toString();
-    const hashedOtp = await bcrypt.hash(otpVal, 10);
+    // Generate secure reset verification token instead of raw digits
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    await user.save();
 
-    // Save OTP to Redis (5 minutes TTL)
-    await redisService.saveOTP(user.email, hashedOtp, 300);
-
-    await emailService.sendOTP(user.email, otpVal);
+    await emailService.sendForgotPasswordEmail(user.email, user.name, resetToken);
 
     await ActivityLog.create({
       user: user._id, userEmail: user.email, userRole: user.role,
-      action: 'forgot_password_email_otp', success: true, ip: req.ip,
+      action: 'forgot_password_email_token', success: true, ip: req.ip,
     });
 
-    res.json({ success: true, message: 'OTP has been sent to your email.' });
+    res.json({ success: true, message: 'A password reset link has been sent to your email.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -589,6 +852,7 @@ const resetPassword = async (req, res) => {
     user.password = password;
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
+    user.passwordChangedAt = new Date();
     user.refreshTokens = []; // Clear refresh tokens to force re-login on all devices
     
     await user.save();
@@ -597,6 +861,10 @@ const resetPassword = async (req, res) => {
       user: user._id, userEmail: user.email, userRole: user.role,
       action: 'password_reset', success: true, ip: req.ip,
     });
+
+    // Trigger Password Changed Confirmation Email
+    await emailService.sendPasswordChangedEmail(user.email, user.name)
+      .catch(err => console.error('Password reset confirmation failed:', err.message));
 
     res.json({ success: true, message: 'Password reset successful. You can now log in with your new password.' });
   } catch (error) {
@@ -608,5 +876,6 @@ module.exports = {
   login, register, refresh, logout, getMe,
   setup2FA, verify2FA, disable2FA,
   changePassword, updateProfile,
-  forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword
+  forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword,
+  verifyEmail, googleLogin, googleSignup
 };
