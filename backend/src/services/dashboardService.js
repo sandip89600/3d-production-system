@@ -41,6 +41,15 @@ class DashboardService {
       },
     ]);
 
+    const stats = overallStats || {
+      totalProjects: 0,
+      completedProjects: 0,
+      delayedProjects: 0,
+      reviewProjects: 0,
+      activeProjects: 0,
+      uploadedToday: 0
+    };
+
     // Employee Stats
     const totalEmployees = await User.countDocuments({ role: 'employee' });
     const activeEmployees = await User.countDocuments({ role: 'employee', isActive: true });
@@ -174,12 +183,12 @@ class DashboardService {
 
     return {
       cards: {
-        totalProjects: overallStats.totalProjects,
-        completedProjects: overallStats.completedProjects,
-        delayedProjects: overallStats.delayedProjects,
-        activeProjects: overallStats.activeProjects,
-        reviewProjects: overallStats.reviewProjects,
-        projectsUploadedToday: overallStats.uploadedToday,
+        totalProjects: stats.totalProjects,
+        completedProjects: stats.completedProjects,
+        delayedProjects: stats.delayedProjects,
+        activeProjects: stats.activeProjects,
+        reviewProjects: stats.reviewProjects,
+        projectsUploadedToday: stats.uploadedToday,
         employeesWorkingToday: workingToday,
         // New workflow indicators
         whatsappSentCount: totalWhatsAppSent,
@@ -242,6 +251,15 @@ class DashboardService {
         },
       },
     ]);
+
+    const stats = myStats || {
+      totalUploaded: 0,
+      inProgress: 0,
+      review: 0,
+      completed: 0,
+      delayed: 0,
+      uploadedToday: 0
+    };
 
     // Assigned employees count
     const assignedEmployees = await Project.distinct('assignedTo', {
@@ -328,13 +346,13 @@ class DashboardService {
 
     return {
       cards: {
-        myUploadedProjects: myStats.totalUploaded,
-        projectsInProgress: myStats.inProgress,
-        pendingReview: myStats.review,
-        completedProjects: myStats.completed,
-        delayedProjects: myStats.delayed,
+        myUploadedProjects: stats.totalUploaded,
+        projectsInProgress: stats.inProgress,
+        pendingReview: stats.review,
+        completedProjects: stats.completed,
+        delayedProjects: stats.delayed,
         assignedEmployeesCount: assignedEmployees.length,
-        todayUploadCount: myStats.uploadedToday,
+        todayUploadCount: stats.uploadedToday,
       },
       weeklyStatistics: weeklyStats,
       monthlyStatistics: monthlyStats,
@@ -384,6 +402,14 @@ class DashboardService {
       },
     ]);
 
+    const stats = projectStats || {
+      assignedCount: 0,
+      inProgressCount: 0,
+      completedCount: 0,
+      delayedCount: 0,
+      availableCount: 0
+    };
+
     // Today's tasks (Active assignments details)
     const activeAssignments = await ProjectAssignment.find({
       employee: employeeId,
@@ -405,17 +431,17 @@ class DashboardService {
     const distinctDays = new Set(workingDays.map((d) => d.toISOString().split('T')[0])).size;
 
     // Performance score calculation: completions percentage
-    const totalAssigned = projectStats.assignedCount;
-    const completedProjects = projectStats.completedCount;
+    const totalAssigned = stats.assignedCount;
+    const completedProjects = stats.completedCount;
     const performanceScore = totalAssigned > 0 ? Math.round((completedProjects / totalAssigned) * 100) : 100;
 
     return {
       cards: {
         assignedProjects: totalAssigned,
-        availableProjects: projectStats.availableCount,
-        inProgressProjects: projectStats.inProgressCount,
+        availableProjects: stats.availableCount,
+        inProgressProjects: stats.inProgressCount,
         completedProjects: completedProjects,
-        delayedProjects: projectStats.delayedCount,
+        delayedProjects: stats.delayedCount,
         currentProgress: avgProgress,
         performanceScore,
         totalWorkingDays: distinctDays,
