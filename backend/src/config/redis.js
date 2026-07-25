@@ -11,7 +11,7 @@ const getRedisClient = () => {
   if (redisUrl) {
     logger.info('🔌 Initializing Redis client using REDIS_URL');
     redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: null,
       retryStrategy(times) {
         const delay = Math.min(times * 100, 3000);
         return delay;
@@ -23,7 +23,7 @@ const getRedisClient = () => {
       host: process.env.REDIS_HOST || '127.0.0.1',
       port: parseInt(process.env.REDIS_PORT) || 6379,
       password: process.env.REDIS_PASSWORD || undefined,
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: null,
       retryStrategy(times) {
         const delay = Math.min(times * 100, 3000);
         return delay;
