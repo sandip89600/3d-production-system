@@ -46,8 +46,8 @@ const server = http.createServer(app);
 // Robust CORS origin helper
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://www.allindia3dstudio.deepitlabs.in',
-  'https://allindia3dstudio.deepitlabs.in',
+  'https://www.all3dstudio.deepitlabs.in',
+  'https://all3dstudio.deepitlabs.in',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5174',

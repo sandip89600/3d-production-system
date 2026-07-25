@@ -50,7 +50,7 @@ Create a `.env` file in `/var/www/all3dstudio/backend/.env`.
 ```ini
 PORT=5000
 NODE_ENV=production
-FRONTEND_URL=https://allindia3dstudio.deepitlabs.in
+FRONTEND_URL=https://all3dstudio.deepitlabs.in
 
 # ─── MongoDB Atlas Connection
 # Replace with your production connection string
@@ -125,12 +125,12 @@ pm2 reload 3d-production-backend
 
 1. Create Nginx site configuration file:
    ```bash
-   sudo nano /etc/nginx/sites-available/allindia3dstudio
+   sudo nano /etc/nginx/sites-available/all3dstudio
    ```
 2. Copy the contents of `backend/nginx.conf` into this file.
 3. Enable the site configuration:
    ```bash
-   sudo ln -s /etc/nginx/sites-available/allindia3dstudio /etc/nginx/sites-enabled/
+   sudo ln -s /etc/nginx/sites-available/all3dstudio /etc/nginx/sites-enabled/
    # Remove default Nginx site configuration
    sudo rm /etc/nginx/sites-enabled/default
    ```
@@ -142,7 +142,7 @@ pm2 reload 3d-production-backend
 5. Install Let's Encrypt SSL via Certbot:
    ```bash
    sudo apt install certbot python3-certbot-nginx -y
-   sudo certbot --nginx -d allindia3dstudio.deepitlabs.in -d www.allindia3dstudio.deepitlabs.in
+   sudo certbot --nginx -d all3dstudio.deepitlabs.in -d www.all3dstudio.deepitlabs.in
    ```
 
 ---
@@ -162,9 +162,9 @@ Ensure the following Cloudflare DNS settings are applied:
 Ensure all system services are reporting healthy states.
 
 ### Standard Health Endpoints:
-- **Liveness Ping**: `GET https://allindia3dstudio.deepitlabs.in/api/health`
-- **Readiness Check**: `GET https://allindia3dstudio.deepitlabs.in/api/ready`
-- **System Metrics**: `GET https://allindia3dstudio.deepitlabs.in/api/metrics`
+- **Liveness Ping**: `GET https://all3dstudio.deepitlabs.in/api/health`
+- **Readiness Check**: `GET https://all3dstudio.deepitlabs.in/api/ready`
+- **System Metrics**: `GET https://all3dstudio.deepitlabs.in/api/metrics`
 
 ### Log Inspections:
 To tail real-time output and debug runtime operations:
