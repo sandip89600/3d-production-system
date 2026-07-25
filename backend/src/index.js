@@ -38,7 +38,6 @@ const searchRoutes = require('./routes/searchRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
-const sitemapRoutes = require('./routes/sitemap');
 
 const app = express();
 const server = http.createServer(app);
@@ -46,8 +45,8 @@ const server = http.createServer(app);
 // Robust CORS origin helper
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://www.all3dstudio.deepitlabs.in',
-  'https://all3dstudio.deepitlabs.in',
+  'https://www.allindia3dstudio.deepitlabs.in',
+  'https://allindia3dstudio.deepitlabs.in',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5174',
@@ -125,9 +124,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Public project download token route (used by WhatsApp links)
 const { downloadProjectByToken } = require('./controllers/projectController');
 app.get('/project/:projectIdCode', downloadProjectByToken);
-
-// Sitemap route
-app.use('/', sitemapRoutes);
 
 // API Routes
 app.use('/api/auth', authRoutes);
