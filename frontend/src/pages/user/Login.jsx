@@ -203,10 +203,17 @@ export default function Login() {
           </form>
         </div>
 
-
+        {/* Footer actions */}
+        <div className="text-center mt-6 text-xs text-slate-400">
+          <p>
+            New client?{' '}
+            <Link to="/signup" className="text-amber-500 hover:text-amber-400 font-semibold transition-colors">
+              Create account
+            </Link>
+          </p>
+        </div>
 
       </div>
-
     </div>
   );
 }

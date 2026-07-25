@@ -6,14 +6,14 @@ import GoogleAuthButton from '../../../components/public/GoogleAuthButton';
 import toast from 'react-hot-toast';
 
 const roleRedirects = {
-  superadmin: '/superadmin/dashboard',
+  developer: '/developer/dashboard',
   admin: '/admin/dashboard',
   employee: '/employee/dashboard',
 };
 
 const portalDetails = {
-  superadmin: {
-    title: 'Super Admin Portal',
+  developer: {
+    title: 'Developer Portal',
     subtitle: 'Owners & Founders workspace control',
     accentColor: 'from-purple-500 to-indigo-600',
   },
@@ -158,7 +158,7 @@ export default function LoginPage({ portalRole = 'employee' }) {
               Welcome back
             </h2>
             <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-              Sign in to the <span className="font-semibold text-blue-400 capitalize">{portalRole}</span> workspace. {portalRole === 'superadmin' ? 'Self-registration is disabled for security.' : 'If you do not have an account, click the link below to register.'}
+              Sign in to the <span className="font-semibold text-blue-400 capitalize">{portalRole}</span> workspace. {portalRole === 'developer' ? 'Self-registration is disabled for security.' : 'If you do not have an account, click the link below to register.'}
             </p>
           </div>
 
@@ -246,7 +246,7 @@ export default function LoginPage({ portalRole = 'employee' }) {
             </button>
           </form>
 
-          {portalRole !== 'superadmin' && (
+          {portalRole !== 'developer' && (
             <>
               <div className="relative flex py-4 items-center">
                 <div className="flex-grow border-t border-white/10"></div>
@@ -258,7 +258,7 @@ export default function LoginPage({ portalRole = 'employee' }) {
           )}
 
           {/* Footer actions */}
-          {portalRole !== 'superadmin' && (
+          {portalRole === 'employee' && (
             <div className="text-center mt-6 text-xs text-slate-400">
               <p>
                 Don't have an account?{' '}
