@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { Eye, EyeOff, Boxes, Shield, Zap, Lock, User, Mail, Phone, Users } from 'lucide-react';
+import { Eye, EyeOff, Boxes, Shield, Zap, Lock, User, Mail, Phone, Users, Landmark, ArrowRight } from 'lucide-react';
+import { departmentsAPI } from '../../../api';
 import toast from 'react-hot-toast';
 
 export default function SignupPage() {
@@ -13,17 +14,45 @@ export default function SignupPage() {
     email: '',
     mobile: '',
     category: '', // 'admin' or 'employee'
+    department: '',
     password: '',
     confirmPassword: '',
   });
 
+  const [departments, setDepartments] = useState([]);
+  const [loadingDepts, setLoadingDepts] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
+
+  useEffect(() => {
+    if (form.category === 'employee') {
+      const fetchDepts = async () => {
+        setLoadingDepts(true);
+        try {
+          const { data } = await departmentsAPI.getPublic();
+          setDepartments(data.departments || []);
+        } catch (err) {
+          toast.error('Failed to load departments.');
+        } finally {
+          setLoadingDepts(false);
+        }
+      };
+      fetchDepts();
+    } else {
+      setForm(prev => ({ ...prev, department: '' }));
+    }
+  }, [form.category]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.mobile || !form.category || !form.password) {
       toast.error('All fields are required.');
+      return;
+    }
+    if (form.category === 'employee' && !form.department) {
+      toast.error('Department selection is mandatory for employees.');
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -37,20 +66,27 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         name: form.name,
         email: form.email,
         mobile: form.mobile,
         password: form.password,
         role: form.category, // admin or employee
+        department: form.category === 'employee' ? form.department : undefined,
       });
 
-      toast.success('Registration successful! Welcome to All 3D Studio.');
-      const roleRedirects = {
-        admin: '/admin/dashboard',
-        employee: '/employee/dashboard',
-      };
-      navigate(roleRedirects[form.category] || '/');
+      if (result.pendingVerification) {
+        setPendingVerification(true);
+        setVerificationMessage(result.message);
+        toast.success('Registration successful. Verify your email!');
+      } else {
+        toast.success('Registration successful!');
+        const roleRedirects = {
+          admin: '/admin/dashboard',
+          employee: '/employee/dashboard',
+        };
+        navigate(roleRedirects[form.category] || '/');
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed. Check your details.';
       toast.error(msg);
@@ -58,6 +94,29 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
+  if (pendingVerification) {
+    return (
+      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="w-full max-w-md bg-dark-900 border border-white/5 rounded-3xl p-8 text-center shadow-2xl backdrop-blur-md relative z-10">
+          <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Mail className="w-8 h-8 text-blue-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Check Your Inbox</h2>
+          <p className="text-slate-450 text-sm mb-6 leading-relaxed">
+            {verificationMessage || 'A verification link has been sent to your email address. Please check your inbox and verify your account to activate your workspace.'}
+          </p>
+          <Link
+            to="/admin/login"
+            className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+          >
+            <span>Proceed to Login</span>
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark-950 flex animate-fade-in">
@@ -187,6 +246,32 @@ export default function SignupPage() {
                 </select>
               </div>
             </div>
+
+            {form.category === 'employee' && (
+              <div>
+                <label className="label">Department</label>
+                <div className="relative">
+                  <Landmark className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <select
+                    required
+                    className="input text-white"
+                    style={{ paddingLeft: '2.5rem' }}
+                    value={form.department}
+                    onChange={e => setForm({ ...form, department: e.target.value })}
+                    disabled={loadingDepts}
+                  >
+                    <option value="" className="text-slate-800">
+                      {loadingDepts ? 'Loading departments...' : 'Select Department'}
+                    </option>
+                    {departments.map(dept => (
+                      <option key={dept._id} value={dept._id} className="text-slate-800">
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="label">Password</label>

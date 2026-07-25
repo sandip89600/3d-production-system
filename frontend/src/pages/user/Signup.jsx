@@ -75,7 +75,7 @@ export default function Signup() {
         toast.success('Registration pending. Verify email!');
       } else {
         toast.success('Welcome to All 3D Studio!');
-        navigate('/dashboard');
+        navigate('/client/dashboard');
       }
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed. Check details.';
@@ -90,7 +90,7 @@ export default function Signup() {
     try {
       await signupWithGoogle(credential);
       toast.success('Sign up successful! Welcome to All 3D Studio.');
-      navigate('/dashboard');
+      navigate('/client/dashboard');
     } catch (err) {
       const msg = err.response?.data?.message || 'Google signup failed.';
       toast.error(msg);
