@@ -6,9 +6,6 @@ const requiredEnv = [
   'JWT_REFRESH_SECRET',
 ];
 
-// These are required only when specific features are enabled
-// REDIS_URL  → required if Redis caching is active (optional — falls back to in-memory)
-// AWS_*      → required only when STORAGE_PROVIDER=s3
 const productionRequiredEnv = [];
 
 

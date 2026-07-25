@@ -14,10 +14,6 @@ const mongoSanitize = require('express-mongo-sanitize');
 const path = require('path');
 
 const { logger } = require('./utils/logger');
-const { getRedisClient } = require('./config/redis');
-
-// Initialize Redis Client connection
-getRedisClient();
 
 const connectDB = require('./config/database');
 const { generalLimiter } = require('./middleware/rateLimiter');

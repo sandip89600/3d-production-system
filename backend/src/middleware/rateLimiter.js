@@ -1,35 +1,14 @@
 const rateLimit = require('express-rate-limit');
-const { getRedisClient } = require('../config/redis');
 const { logger } = require('../utils/logger');
 
-let RedisStore = null;
-try {
-  RedisStore = require('rate-limit-redis').default || require('rate-limit-redis').RedisStore || require('rate-limit-redis');
-} catch (err) {
-  logger.warn('⚠️  Could not load rate-limit-redis library:', err.message);
-}
-
+// Redis removed — all rate limiters use in-memory MemoryStore
 const getRateLimitOptions = (prefix, options) => {
-  const baseOptions = {
+  logger.info(`[RateLimiter] "${prefix}" limiter using in-memory MemoryStore`);
+  return {
     standardHeaders: true,
     legacyHeaders: false,
-    ...options
+    ...options,
   };
-
-  if (RedisStore) {
-    try {
-      const redisClient = getRedisClient();
-      baseOptions.store = new RedisStore({
-        // Send commands using the ioredis client
-        sendCommand: (...args) => redisClient.call(...args),
-        prefix: `rl:${prefix}:`, // Unique rate limit prefix per limiter
-      });
-    } catch (err) {
-      logger.warn(`⚠️  Rate limiting RedisStore initialization failed for "${prefix}", falling back to MemoryStore:`, err.message);
-    }
-  }
-
-  return baseOptions;
 };
 
 const generalLimiter = rateLimit(getRateLimitOptions('general', {

@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const { getRedisClient } = require('../config/redis');
-const { S3Client, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const { logger } = require('../utils/logger');
 
 // GET /health
@@ -18,7 +16,7 @@ router.get('/health', (req, res) => {
 router.get('/ready', async (req, res) => {
   const status = {
     database: 'DOWN',
-    redis: 'DOWN',
+    cache: 'IN_MEMORY', // Redis removed — using in-memory cache
     storage: 'DOWN',
   };
 
@@ -36,22 +34,10 @@ router.get('/ready', async (req, res) => {
     isReady = false;
   }
 
-  // 2. Redis Check
-  try {
-    const redisClient = getRedisClient();
-    if (redisClient && redisClient.status === 'ready') {
-      status.redis = 'UP';
-    } else {
-      isReady = false;
-    }
-  } catch (err) {
-    logger.error('[Health] Redis ready check failed:', err.message);
-    isReady = false;
-  }
-
-  // 3. Storage Check (S3 client verification if S3 is active provider)
+  // 2. Storage Check
   try {
     if (process.env.STORAGE_PROVIDER === 's3') {
+      const { S3Client, ListObjectsV2Command } = require('@aws-sdk/client-s3');
       const s3 = new S3Client({
         region: process.env.AWS_REGION || 'ap-south-1',
         credentials: {
@@ -60,15 +46,9 @@ router.get('/ready', async (req, res) => {
         },
         maxAttempts: 1,
       });
-      // Run light command to check bucket access
-      const command = new ListObjectsV2Command({
-        Bucket: process.env.AWS_BUCKET_NAME,
-        MaxKeys: 1,
-      });
-      await s3.send(command);
+      await s3.send(new ListObjectsV2Command({ Bucket: process.env.AWS_BUCKET_NAME, MaxKeys: 1 }));
       status.storage = 'UP';
     } else {
-      // Local storage check
       const fs = require('fs');
       const uploadPath = process.env.UPLOAD_PATH || './uploads';
       if (fs.existsSync(uploadPath)) {
