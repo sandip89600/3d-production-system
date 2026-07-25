@@ -178,7 +178,7 @@ class WhatsAppService {
     });
 
     const categoryLabel = category === 'architecture' ? '3D Architecture' : 'Modeling & Rendering';
-    const portalUrl = `${process.env.FRONTEND_URL || 'https://allindia3dstudio.deepitlabs.in'}/download-project/${project._id}`;
+    const portalUrl = `${process.env.FRONTEND_URL || 'https://all3dstudio.deepitlabs.in'}/download-project/${project._id}`;
 
     const uploaderRoleLabel = uploader.role === 'superadmin' ? 'Super Admin' : 'Admin';
 
