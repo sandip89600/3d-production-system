@@ -5,6 +5,7 @@ import { Compass, Eye, ShieldCheck, ArrowRight, Play, Sparkles, Building, Layers
 import Card3DTilt from '../../components/public/Card3DTilt';
 import FloatingRenders from '../../components/public/FloatingRenders';
 import BeforeAfterSlider from '../../components/public/BeforeAfterSlider';
+import SEO from '../../components/public/SEO';
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [videoFailed, setVideoFailed] = useState(false);
@@ -73,6 +74,11 @@ export default function Home() {
 
   return (
     <div className="overflow-hidden">
+      <SEO 
+        title="Home" 
+        description="All 3D Studio is an AI-powered 3D visualization and work management platform. We render future architecture with photorealistic exterior, interior, and walkthrough animation designs." 
+        breadcrumbs={[{ name: 'Home', path: '/' }]}
+      />
       
       {/* 1. CINEMATIC HERO SECTION */}
       <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 lg:px-12">
@@ -303,6 +309,7 @@ export default function Home() {
                   <img
                     src={proj.image}
                     alt={proj.title}
+                    loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-[0.7] group-hover:brightness-[0.8]"
                   />
                   

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Lock, Mail, ShieldAlert, Boxes, ArrowRight, ArrowLeft } from 'lucide-react';
+import SEO from '../../components/public/SEO';
 import toast from 'react-hot-toast';
 
 const roleRedirects = {
@@ -53,6 +54,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center pt-24 pb-16 px-6 relative overflow-hidden">
+      <SEO 
+        title="Client Login" 
+        description="Log in to your All 3D Studio client workspace to review blueprints, track rendering progress, and download deliverables." 
+        breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'Client Login', path: '/login' }]}
+      />
       
       {/* Floating Back to Home Button */}
       <div className="absolute top-6 left-6 z-20">

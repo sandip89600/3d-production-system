@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Sparkles, Trophy, Users, CheckCircle, Calendar, MessageSquare } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
+import SEO from '../../components/public/SEO';
 
 export default function About() {
   const milestones = [
@@ -48,6 +49,11 @@ export default function About() {
 
   return (
     <div className="pt-28 pb-24 overflow-hidden">
+      <SEO 
+        title="About Us" 
+        description="Learn about All 3D Studio, Noida's elite collective of 3D visualizers, animators, and design specialists delivering photorealistic rendering and visualization services." 
+        breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'About Us', path: '/about' }]}
+      />
       
       {/* 1. HERO SECTION */}
       <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-20">
@@ -76,28 +82,32 @@ export default function About() {
           <div className="rounded-2xl overflow-hidden border border-slate-800 aspect-square">
             <img
               src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80"
-              alt="Architecture project"
+              alt="Luxury 3D Exterior Villa Architecture Visualization by All 3D Studio"
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
           <div className="rounded-2xl overflow-hidden border border-slate-800 aspect-square translate-y-6">
             <img
               src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=400&q=80"
-              alt="Interior lounge"
+              alt="Modern Luxury Kitchen Interior Rendering Showcase"
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
           <div className="rounded-2xl overflow-hidden border border-slate-800 aspect-square -translate-y-6">
             <img
               src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80"
-              alt="Building detail"
+              alt="Commercial Highrise Corporate Office Skyscraper Rendering Detail"
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
           <div className="rounded-2xl overflow-hidden border border-slate-800 aspect-square">
             <img
               src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=80"
-              alt="Rendering material"
+              alt="Bespoke Atrium Lounge Interior CG Visualization Materials"
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
@@ -195,7 +205,8 @@ export default function About() {
                 <div className="aspect-[3/4] w-full overflow-hidden relative">
                   <img
                     src={member.image}
-                    alt={member.name}
+                    alt={`${member.name} - ${member.role} at All 3D Studio`}
+                    loading="lazy"
                     className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />

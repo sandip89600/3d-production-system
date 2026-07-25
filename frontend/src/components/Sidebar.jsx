@@ -39,22 +39,29 @@ const employeeNav = [
   { label: 'Notifications', icon: Bell, path: '/employee/notifications' },
 ];
 
+const clientNav = [
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/client/dashboard' },
+];
+
 const navMap = {
   superadmin: superAdminNav,
   admin: adminNav,
   employee: employeeNav,
+  client: clientNav,
 };
 
 const roleColors = {
   superadmin: 'from-purple-600 to-blue-600',
   admin: 'from-blue-600 to-cyan-600',
   employee: 'from-emerald-600 to-teal-600',
+  client: 'from-amber-600 to-orange-600',
 };
 
 const roleLabels = {
   superadmin: 'Developer',
   admin: 'Admin',
   employee: 'Employee',
+  client: 'Client',
 };
 
 export default function Sidebar({ mobileSidebarOpen, setMobileSidebarOpen }) {
@@ -64,9 +71,14 @@ export default function Sidebar({ mobileSidebarOpen, setMobileSidebarOpen }) {
   const navItems = navMap[user?.role] || [];
 
   const handleLogout = async () => {
+    const role = user?.role;
     await logout();
     if (setMobileSidebarOpen) setMobileSidebarOpen(false);
-    navigate('/admin/login');
+    if (role === 'client') {
+      navigate('/login');
+    } else {
+      navigate('/admin/login');
+    }
   };
 
   return (

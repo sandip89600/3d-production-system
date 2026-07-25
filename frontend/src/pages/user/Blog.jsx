@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Clock, Calendar, ArrowRight, BookOpen, Rss, Eye } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
+import SEO from '../../components/public/SEO';
 export default function Blog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -87,6 +88,11 @@ export default function Blog() {
 
   return (
     <div className="pt-28 pb-24 overflow-hidden">
+      <SEO 
+        title="Blog" 
+        description="Stay updated with All 3D Studio's rendering techniques, 3D visualization trends, rendering tutorials, Unreal Engine guides, and Noida real-estate case studies." 
+        breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }]}
+      />
       
       {/* Header section */}
       <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-12">
@@ -135,6 +141,7 @@ export default function Blog() {
               <img
                 src={filteredFeaturedArticle.image}
                 alt={filteredFeaturedArticle.title}
+                loading="lazy"
                 className="w-full h-full object-cover hover:scale-102 transition-transform duration-500"
               />
             </div>
@@ -189,6 +196,7 @@ export default function Blog() {
                       <img
                         src={art.image}
                         alt={art.title}
+                        loading="lazy"
                         className="w-full h-full object-cover hover:scale-103 transition-transform duration-500"
                       />
                     </div>

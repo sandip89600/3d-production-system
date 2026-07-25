@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, CheckCircle2, Sparkles, Building, Layers, ShieldAlert } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
+import SEO from '../../components/public/SEO';
+import { logEvent } from '../../utils/analytics';
 
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', projectType: 'Architecture Visualization', message: '' });
@@ -12,11 +14,19 @@ export default function Contact() {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) return;
     
+    // Capture form values before resetting state in callback
+    const leadDetails = {
+      lead_name: form.name,
+      lead_email: form.email,
+      project_type: form.projectType,
+    };
+
     setLoading(true);
     // Simulate API delay
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
+      logEvent('generate_lead', leadDetails);
       setForm({ name: '', email: '', projectType: 'Architecture Visualization', message: '' });
     }, 1500);
   };
@@ -32,6 +42,11 @@ export default function Contact() {
 
   return (
     <div className="pt-28 pb-24 overflow-hidden">
+      <SEO 
+        title="Contact Us" 
+        description="Get in touch with All 3D Studio Noida to discuss your 3D architectural rendering projects, interactive walkthrough animations, and custom pricing plans." 
+        breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'Contact Us', path: '/contact' }]}
+      />
       
       <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-16">
         <div className="text-center max-w-2xl mx-auto flex flex-col gap-4">

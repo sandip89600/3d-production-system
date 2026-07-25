@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Lock, Mail, User, Briefcase, Boxes, ArrowRight, ArrowLeft, Phone } from 'lucide-react';
+import SEO from '../../components/public/SEO';
 import toast from 'react-hot-toast';
 
 export default function Signup() {
@@ -57,6 +58,11 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center pt-24 pb-16 px-6 relative overflow-hidden">
+      <SEO 
+        title="Client Registration" 
+        description="Register a client account at All 3D Studio Noida to submit design briefs, track rendering progress, and download high-definition rendering deliverables." 
+        breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'Client Registration', path: '/signup' }]}
+      />
       
       {/* Floating Back to Home Button */}
       <div className="absolute top-6 left-6 z-20">

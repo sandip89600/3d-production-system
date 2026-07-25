@@ -34,7 +34,16 @@ api.interceptors.response.use(
       } catch (refreshError) {
         if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
           localStorage.clear();
-          window.location.href = '/admin/login';
+          const path = window.location.pathname;
+          if (path.startsWith('/employee')) {
+            window.location.href = '/employee/login';
+          } else if (path.startsWith('/superadmin')) {
+            window.location.href = '/superadmin/login';
+          } else if (path.startsWith('/admin')) {
+            window.location.href = '/admin/login';
+          } else {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(refreshError);
       }

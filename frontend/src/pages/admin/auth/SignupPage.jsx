@@ -45,8 +45,12 @@ export default function SignupPage() {
         role: form.category, // admin or employee
       });
 
-      toast.success('Registration successful! Please log in.');
-      navigate(`/${form.category}/login`);
+      toast.success('Registration successful! Welcome to All 3D Studio.');
+      const roleRedirects = {
+        admin: '/admin/dashboard',
+        employee: '/employee/dashboard',
+      };
+      navigate(roleRedirects[form.category] || '/');
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed. Check your details.';
       toast.error(msg);

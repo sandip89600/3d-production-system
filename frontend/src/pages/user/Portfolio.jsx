@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, Calendar, Compass, Layers, Monitor, HardDrive, User, ChevronRight } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
 import BeforeAfterSlider from '../../components/public/BeforeAfterSlider';
+import SEO from '../../components/public/SEO';
+import { logEvent } from '../../utils/analytics';
 
 export default function Portfolio() {
   const [searchParams, setSearchParams] = useSearchParams();
   const catParam = searchParams.get('cat');
   const idParam = searchParams.get('id');
+  const { slug } = useParams();
+  const navigate = useNavigate();
 
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
@@ -18,6 +22,7 @@ export default function Portfolio() {
   const projects = [
     {
       id: 1,
+      slug: 'modern-villa-exterior-rendering',
       title: 'Marina Sands Villa',
       category: 'Exterior',
       image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
@@ -31,6 +36,7 @@ export default function Portfolio() {
     },
     {
       id: 2,
+      slug: 'nordic-minimalist-kitchen-visualization',
       title: 'Nordic Minimalist Kitchen',
       category: 'Interior',
       image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80',
@@ -44,6 +50,7 @@ export default function Portfolio() {
     },
     {
       id: 3,
+      slug: 'commercial-skyscraper-rendering',
       title: 'Skylight Business Tower',
       category: 'Architecture',
       image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
@@ -57,6 +64,7 @@ export default function Portfolio() {
     },
     {
       id: 4,
+      slug: 'glasshouse-forest-retreat-rendering',
       title: 'Golden Hour Glasshouse',
       category: 'Exterior',
       image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80',
@@ -70,6 +78,7 @@ export default function Portfolio() {
     },
     {
       id: 5,
+      slug: 'luxury-hotel-atrium-visualization',
       title: 'Amber Resonance Atrium',
       category: 'Interior',
       image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80',
@@ -83,6 +92,7 @@ export default function Portfolio() {
     },
     {
       id: 6,
+      slug: 'waterfront-villas-walkthrough-animation',
       title: 'Villas on the Water',
       category: 'Animation',
       image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80',
@@ -96,6 +106,7 @@ export default function Portfolio() {
     },
     {
       id: 7,
+      slug: 'bespoke-oak-armchair-3d-model',
       title: 'Bespoke Oak Armchair',
       category: 'Modeling',
       image: 'https://images.unsplash.com/photo-1592078615290-033ee584e267?auto=format&fit=crop&w=1200&q=80',
@@ -109,6 +120,7 @@ export default function Portfolio() {
     },
     {
       id: 8,
+      slug: 'monolithic-concrete-pavilion-architectural-render',
       title: 'Monolithic Concrete Pavilion',
       category: 'Rendering',
       image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
@@ -122,7 +134,7 @@ export default function Portfolio() {
     }
   ];
 
-  // Sync state with URL search params
+  // Sync state with URL search params & dynamic URL slug
   useEffect(() => {
     if (catParam) {
       // Capitalize first letter
@@ -131,11 +143,22 @@ export default function Portfolio() {
         setActiveFilter(filterName);
       }
     }
-    if (idParam) {
+    if (slug) {
+      const proj = projects.find(p => p.slug === slug);
+      if (proj) {
+        setSelectedProject(proj);
+      }
+    } else if (idParam) {
       const proj = projects.find(p => p.id === parseInt(idParam));
-      if (proj) setSelectedProject(proj);
+      if (proj) {
+        setSelectedProject(proj);
+        // Replace with clean SEO url
+        navigate(`/portfolio/${proj.slug}`, { replace: true });
+      }
+    } else {
+      setSelectedProject(null);
     }
-  }, [catParam, idParam]);
+  }, [catParam, idParam, slug]);
 
   const handleFilterClick = (filter) => {
     setActiveFilter(filter);
@@ -148,26 +171,64 @@ export default function Portfolio() {
 
   const openLightbox = (proj) => {
     setSelectedProject(proj);
-    setSearchParams(prev => {
-      prev.set('id', proj.id.toString());
-      return prev;
+    logEvent('view_item', {
+      item_id: proj.id,
+      item_name: proj.title,
+      item_category: proj.category,
+      item_location: proj.location,
     });
+    navigate(`/portfolio/${proj.slug}`);
   };
 
   const closeLightbox = () => {
     setSelectedProject(null);
-    setSearchParams(prev => {
-      prev.delete('id');
-      return prev;
-    });
+    navigate('/portfolio');
   };
 
   const filteredProjects = activeFilter === 'All'
     ? projects
     : projects.filter(p => p.category === activeFilter || (activeFilter === 'Architecture' && (p.category === 'Exterior' || p.category === 'Interior')));
 
+  // Define dynamic schema for the selected project
+  const projectSchema = selectedProject ? {
+    "@context": "https://schema.org",
+    "@type": "VisualArtwork",
+    "name": selectedProject.title,
+    "image": selectedProject.image,
+    "creator": {
+      "@type": "Organization",
+      "name": "All 3D Studio"
+    },
+    "description": selectedProject.description,
+    "artMedium": "3D Digital Render",
+    "artform": "Digital Image",
+    "about": {
+      "@type": "Thing",
+      "name": selectedProject.category
+    }
+  } : null;
+
   return (
     <div className="pt-28 pb-24 overflow-hidden">
+      {selectedProject ? (
+        <SEO 
+          title={selectedProject.title}
+          description={selectedProject.description}
+          breadcrumbs={[
+            { name: 'Home', path: '/' },
+            { name: 'Portfolio', path: '/portfolio' },
+            { name: selectedProject.title, path: `/portfolio/${selectedProject.slug}` }
+          ]}
+          schema={projectSchema}
+          image={selectedProject.image}
+        />
+      ) : (
+        <SEO 
+          title="Portfolio" 
+          description="Browse the All 3D Studio portfolio of photorealistic 3D architectural renders, luxury interior designs, product models, and walkthrough animations." 
+          breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'Portfolio', path: '/portfolio' }]}
+        />
+      )}
       
       {/* Page Header */}
       <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-12">
@@ -237,6 +298,7 @@ export default function Portfolio() {
                   <img
                     src={proj.image}
                     alt={proj.title}
+                    loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 brightness-[0.7] group-hover:brightness-[0.8]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/10 to-transparent" />
