@@ -522,55 +522,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Emergency Contact Form */}
-                <div className="glass-card p-6 space-y-4">
-                  <h3 className="text-white font-bold text-base flex items-center gap-2 border-b border-white/5 pb-3">
-                    <AlertOctagon className="w-4 h-4 text-rose-400" />
-                    Emergency Contact
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="label">Contact Name</label>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Relation Name"
-                        value={profileForm.emergencyContact.name}
-                        onChange={(e) => setProfileForm(p => ({
-                          ...p,
-                          emergencyContact: { ...p.emergencyContact, name: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="label">Relationship</label>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="e.g. Spouse, Parent, Brother"
-                        value={profileForm.emergencyContact.relation}
-                        onChange={(e) => setProfileForm(p => ({
-                          ...p,
-                          emergencyContact: { ...p.emergencyContact, relation: e.target.value }
-                        }))}
-                      />
-                    </div>
-                    <div>
-                      <label className="label">Mobile Number</label>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="+91 98765 43210"
-                        value={profileForm.emergencyContact.mobile}
-                        onChange={(e) => setProfileForm(p => ({
-                          ...p,
-                          emergencyContact: { ...p.emergencyContact, mobile: e.target.value }
-                        }))}
-                      />
-                    </div>
-                  </div>
-                </div>
 
                 <button
                   type="submit"
@@ -588,53 +539,6 @@ export default function ProfilePage() {
                 </button>
               </form>
 
-              {/* Professional Skills Card */}
-              <div className="space-y-6">
-                <div className="glass-card p-6 space-y-4">
-                  <h3 className="text-white font-bold text-base flex items-center gap-2 border-b border-white/5 pb-3">
-                    <Briefcase className="w-4 h-4 text-purple-400" />
-                    Professional Skills
-                  </h3>
-                  
-                  {/* Skill Badge List */}
-                  <div className="flex flex-wrap gap-2 min-h-[50px] p-2 bg-dark-950/40 rounded-xl border border-white/5">
-                    {profileForm.skills.length === 0 ? (
-                      <span className="text-slate-600 text-xs italic m-auto">No skills added yet. Add one below!</span>
-                    ) : (
-                      profileForm.skills.map((skill) => (
-                        <span key={skill} className="px-2.5 py-1 bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 rounded-lg font-medium flex items-center gap-1.5">
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => removeSkill(skill)}
-                            className="hover:bg-blue-500/30 rounded p-0.5 transition-colors"
-                          >
-                            <X className="w-3 h-3 text-blue-400 hover:text-white" />
-                          </button>
-                        </span>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Add Skill Field */}
-                  <form onSubmit={addSkill} className="flex gap-2">
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="e.g. V-Ray, Unreal Engine 5"
-                      value={newSkill}
-                      onChange={(e) => setNewSkill(e.target.value)}
-                    />
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-4 flex items-center justify-center shadow-lg active:scale-95 transition-transform"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </form>
-                  <p className="text-[10px] text-slate-500">Type a skill and click the + button to include it in your profile.</p>
-                </div>
-              </div>
             </div>
           )}
 
