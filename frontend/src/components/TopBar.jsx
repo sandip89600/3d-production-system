@@ -5,13 +5,16 @@ import { useAuth } from '../context/AuthContext';
 import { analyticsAPI } from '../api';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function TopBar({ title, subtitle, onToggleMobileSidebar }) {
   const { user, socket } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const notifRef = useRef(null);
 
   const loadNotifications = async () => {
@@ -20,6 +23,23 @@ export default function TopBar({ title, subtitle, onToggleMobileSidebar }) {
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
     } catch {}
+  };
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    const toastId = toast.loading('Refreshing dashboard data...');
+    try {
+      // Invalidate and refetch all active React Query queries
+      await queryClient.invalidateQueries();
+      // Reload notifications
+      await loadNotifications();
+      toast.success('Dashboard refreshed!', { id: toastId });
+    } catch (err) {
+      toast.error('Failed to refresh data', { id: toastId });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -91,10 +111,11 @@ export default function TopBar({ title, subtitle, onToggleMobileSidebar }) {
       <div className="flex items-center gap-3">
         {/* Refresh */}
         <button
-          onClick={loadNotifications}
-          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all disabled:opacity-50"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
 
         {/* Notifications */}
