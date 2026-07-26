@@ -52,8 +52,9 @@ export default function LoginPage({ portalRole = 'employee' }) {
       } else {
         const userRole = result.user?.role;
         
-        // Enforce Portal Role Boundaries
-        if (userRole !== portalRole) {
+        // Enforce Portal Role Boundaries (Allow Developer/Superadmin to log in to both Admin and Developer portals)
+        const isAllowed = userRole === portalRole || (portalRole === 'admin' && userRole === 'developer');
+        if (!isAllowed) {
           await logout();
           toast.error(`Invalid login. This portal is for ${details.title} users only.`);
           setLoading(false);
@@ -78,7 +79,8 @@ export default function LoginPage({ portalRole = 'employee' }) {
       const result = await loginWithGoogle(credential);
       const userRole = result.user?.role;
 
-      if (userRole !== portalRole) {
+      const isAllowed = userRole === portalRole || (portalRole === 'admin' && userRole === 'developer');
+      if (!isAllowed) {
         await logout();
         toast.error(`Invalid login. This portal is for ${details.title} users only.`);
         setLoading(false);
