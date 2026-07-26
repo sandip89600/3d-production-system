@@ -34,6 +34,7 @@ const searchRoutes = require('./routes/searchRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const visitorRoutes = require('./routes/visitorRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -79,6 +80,9 @@ notificationService.setIO(io);
 
 const securityService = require('./services/securityService');
 securityService.setIO(io);
+
+const visitorController = require('./controllers/visitorController');
+visitorController.setIO(io);
 
 // Socket authentication + room join
 io.on('connection', (socket) => {
@@ -137,6 +141,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/visitor-analytics', visitorRoutes);
 
 const healthRoutes = require('./routes/health');
 app.use('/api', healthRoutes);

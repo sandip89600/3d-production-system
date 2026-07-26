@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Compass, Eye, ArrowRight, Sparkles, Building, Layers, Film, Box, Sofa, Milestone } from 'lucide-react';
@@ -9,6 +9,97 @@ import SEO from '../../components/public/SEO';
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [videoFailed, setVideoFailed] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  const moveDistance = reducedMotion ? 0 : (isMobileDevice ? 20 : 80);
+  const yOffset = reducedMotion ? 0 : 15;
+  const cardYOffset = reducedMotion ? 0 : 30;
+
+  // Reusable Section Scroll Variants
+  const makeSectionVariants = (direction) => ({
+    hidden: {
+      opacity: 0,
+      x: direction === 'left' ? -moveDistance : moveDistance,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.9,
+        ease: [0.16, 1, 0.3, 1], // premium Apple cubic-bezier easeOut
+        when: 'beforeChildren',
+        staggerChildren: 0.08,
+      }
+    }
+  });
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: yOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, x: reducedMotion ? 0 : (isMobileDevice ? 15 : 40) },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 1.2,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const cardContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
+      }
+    }
+  };
+
+  const cardItemVariants = {
+    hidden: { opacity: 0, y: cardYOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const iconVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut',
+      }
+    }
+  };
 
   const services = [
     { title: '3D Architecture Visualization', icon: Building, desc: 'Photorealistic exterior renderings that bring blueprint blueprints to life.' },
@@ -81,7 +172,13 @@ export default function Home() {
       />
       
       {/* 1. CINEMATIC HERO SECTION */}
-      <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 lg:px-12">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+        variants={makeSectionVariants('left')}
+        className="relative min-h-screen flex items-center justify-center pt-20 px-6 lg:px-12"
+      >
         {/* Walkthrough Video Background */}
         <div className="absolute inset-0 z-0 overflow-hidden">
           {!videoFailed ? (
@@ -119,46 +216,47 @@ export default function Home() {
 
         <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Hero text */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="flex flex-col gap-6"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-semibold text-amber-400 w-fit">
-              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+          <div className="flex flex-col gap-6">
+            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-xs font-semibold text-amber-400 w-fit">
+              <motion.span variants={iconVariants} className="flex shrink-0">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              </motion.span>
               <span>World-Class 3D Visualization Studio</span>
-            </div>
+            </motion.div>
             
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
+            <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
               We Render <br />
               <span className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 bg-clip-text text-transparent">
                 Future Architecture
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="text-slate-400 text-lg leading-relaxed max-w-xl">
+            <motion.p variants={itemVariants} className="text-slate-400 text-lg leading-relaxed max-w-xl">
               Transforming wireframes and blueprint schematics into breathtaking, photorealistic cinematic experiences. We work with leading developers and architects worldwide.
-            </p>
+            </motion.p>
 
-            <div className="flex flex-wrap gap-4 mt-4">
-              <Link
-                to="/portfolio"
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3.5 rounded-xl flex items-center gap-2 group transition-all shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 active:scale-95"
-              >
-                <span>Explore Portfolio</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                to="/contact"
-                className="bg-slate-900 hover:bg-slate-850 text-white border border-slate-800 font-semibold px-6 py-3.5 rounded-xl transition-all hover:border-slate-700 active:scale-95"
-              >
-                Request a Quote
-              </Link>
-            </div>
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4 mt-4">
+              <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="flex">
+                <Link
+                  to="/portfolio"
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3.5 rounded-xl flex items-center gap-2 group transition-all shadow-lg shadow-amber-500/10 hover:shadow-amber-500/25 active:scale-95"
+                >
+                  <span>Explore Portfolio</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="flex">
+                <Link
+                  to="/contact"
+                  className="bg-slate-900 hover:bg-slate-850 text-white border border-slate-800 font-semibold px-6 py-3.5 rounded-xl transition-all hover:border-slate-700 active:scale-95 flex items-center justify-center"
+                >
+                  Request a Quote
+                </Link>
+              </motion.div>
+            </motion.div>
 
             {/* Quick Stats Panel (Floating Glass Panel) */}
-            <div className="grid grid-cols-3 gap-6 pt-12 border-t border-slate-850/60 mt-4 max-w-md">
+            <motion.div variants={itemVariants} className="grid grid-cols-3 gap-6 pt-12 border-t border-slate-850/60 mt-4 max-w-md">
               <div>
                 <p className="text-2xl font-bold text-white">500+</p>
                 <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-0.5">Renders Delivered</p>
@@ -171,14 +269,14 @@ export default function Home() {
                 <p className="text-2xl font-bold text-white">15+</p>
                 <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mt-0.5">Global Awards</p>
               </div>
-            </div>
+            </motion.div>
 
-          </motion.div>
+          </div>
 
           {/* Floating Parallax Renders Column */}
-          <div className="hidden lg:block">
+          <motion.div variants={imageVariants} className="hidden lg:block">
             <FloatingRenders />
-          </div>
+          </motion.div>
         </div>
 
         {/* Scroll Indicator */}
@@ -188,13 +286,19 @@ export default function Home() {
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce mx-auto" />
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 2. ABOUT PREVIEW SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-[#020617] border-y border-slate-900">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="py-24 px-6 lg:px-12 bg-[#020617] border-y border-slate-900"
+      >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
-          <div className="relative">
+          <motion.div variants={imageVariants} className="relative">
             <BeforeAfterSlider
               beforeImage="https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80"
               afterImage="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80"
@@ -202,7 +306,7 @@ export default function Home() {
               afterLabel="Final Render"
               className="shadow-2xl shadow-slate-950"
             />
-            <div className="absolute -bottom-6 -right-6 rounded-xl bg-slate-900 border border-slate-800 p-4 shadow-xl flex items-center gap-3">
+            <motion.div variants={iconVariants} className="absolute -bottom-6 -right-6 rounded-xl bg-slate-900 border border-slate-800 p-4 shadow-xl flex items-center gap-3">
               <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500">
                 <Milestone className="w-5 h-5" />
               </div>
@@ -210,80 +314,102 @@ export default function Home() {
                 <p className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Drag to Compare</p>
                 <p className="text-xs text-white font-semibold">100% CAD Scale Accuracy</p>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           <div className="flex flex-col gap-6">
-            <p className="text-xs uppercase font-bold text-amber-500 tracking-widest">Mastering the Details</p>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            <motion.p variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-widest">Mastering the Details</motion.p>
+            <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
               Catering to Luxury Real Estate and High-End Architecture.
-            </h2>
-            <p className="text-slate-400 leading-relaxed text-sm">
+            </motion.h2>
+            <motion.p variants={itemVariants} className="text-slate-400 leading-relaxed text-sm">
               All 3D Studio was founded on a simple principle: details build trust. From the specular roughness of marble flooring to the ambient sunset hues reflecting on insulated glazing, we leave nothing to chance. We combine artistic sensibilities with state-of-the-art computational rendering tools.
-            </p>
-            <p className="text-slate-400 leading-relaxed text-sm">
+            </motion.p>
+            <motion.p variants={itemVariants} className="text-slate-400 leading-relaxed text-sm">
               Our visualizers, texture artists, and camera operators collaborate with interior designers and project managers to yield assets that generate pre-sales, command design approvals, and win bids.
-            </p>
-            <Link
-              to="/about"
-              className="inline-flex items-center gap-2 text-amber-500 font-semibold hover:text-amber-400 transition-colors w-fit mt-2 group text-sm"
-            >
-              <span>Read Our Full Story</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            </motion.p>
+            <motion.div variants={itemVariants} whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="w-fit">
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-2 text-amber-500 font-semibold hover:text-amber-400 transition-colors w-fit mt-2 group text-sm"
+              >
+                <span>Read Our Full Story</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
           </div>
 
         </div>
-      </section>
+      </motion.section>
 
       {/* 3. SERVICES SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-[#060b16]/40 relative">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="py-24 px-6 lg:px-12 bg-[#060b16]/40 relative"
+      >
         {/* Background glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto flex flex-col gap-16">
           <div className="text-center max-w-2xl mx-auto flex flex-col gap-4">
-            <p className="text-xs uppercase font-bold text-amber-500 tracking-widest">Our Capabilities</p>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
+            <motion.p variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-widest">Our Capabilities</motion.p>
+            <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
               Photorealistic Visualization Services
-            </h2>
-            <p className="text-slate-400 text-sm">
+            </motion.h2>
+            <motion.p variants={itemVariants} className="text-slate-400 text-sm">
               Delivering specialized, high-definition assets for architects, developers, furniture makers, and design boutiques.
-            </p>
+            </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div variants={cardContainerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {services.map((s, idx) => (
-              <Card3DTilt key={idx} intensity={10} className="rounded-2xl h-full">
-                <div className="bg-[#0b101c]/90 border border-slate-800/80 p-6 rounded-2xl h-full flex flex-col gap-5 hover:border-slate-700/60 transition-colors shadow-lg">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                    <s.icon className="w-5 h-5" />
+              <motion.div 
+                key={idx} 
+                variants={cardItemVariants}
+                whileHover={{ y: -8, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3)' }}
+                transition={{ duration: 0.3 }}
+                className="h-full rounded-2xl"
+              >
+                <Card3DTilt intensity={10} className="rounded-2xl h-full">
+                  <div className="bg-[#0b101c]/90 border border-slate-800/80 p-6 rounded-2xl h-full flex flex-col gap-5 hover:border-slate-700/60 transition-colors shadow-lg">
+                    <motion.div variants={iconVariants} className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                      <s.icon className="w-5 h-5" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-base font-bold text-white tracking-wide mb-2">{s.title}</h3>
+                      <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white tracking-wide mb-2">{s.title}</h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
-                  </div>
-                </div>
-              </Card3DTilt>
+                </Card3DTilt>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 4. PORTFOLIO MASONRY SECTION */}
-      <section className="py-24 px-6 lg:px-12 bg-[#020617]">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="py-24 px-6 lg:px-12 bg-[#020617]"
+      >
         <div className="max-w-7xl mx-auto flex flex-col gap-12">
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
-              <p className="text-xs uppercase font-bold text-amber-500 tracking-widest">Featured Work</p>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-1">
+              <motion.p variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-widest">Featured Work</motion.p>
+              <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-1">
                 Cinematic Portfolio
-              </h2>
+              </motion.h2>
             </div>
             
             {/* Categories filter */}
-            <div className="flex flex-wrap gap-2">
+            <motion.div variants={itemVariants} className="flex flex-wrap gap-2">
               {portfolioCategories.map(cat => (
                 <button
                   key={cat}
@@ -297,72 +423,87 @@ export default function Home() {
                   {cat}
                 </button>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           {/* Project masonry cards grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div variants={cardContainerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProjects.map(proj => (
-              <Card3DTilt key={proj.id} intensity={12} className="rounded-2xl overflow-hidden group">
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex flex-col justify-end p-6">
-                  {/* Image with zoom on card hover */}
-                  <img
-                    src={proj.image}
-                    alt={proj.title}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-[0.7] group-hover:brightness-[0.8]"
-                  />
-                  
-                  {/* Spotlight shadow overlays */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 z-0" />
+              <motion.div
+                key={proj.id}
+                variants={cardItemVariants}
+                whileHover={{ y: -8, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+                transition={{ duration: 0.3 }}
+                className="rounded-2xl overflow-hidden"
+              >
+                <Card3DTilt intensity={12} className="rounded-2xl overflow-hidden group">
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex flex-col justify-end p-6">
+                    {/* Image with zoom on card hover */}
+                    <img
+                      src={proj.image}
+                      alt={proj.title}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-[0.7] group-hover:brightness-[0.8]"
+                    />
+                    
+                    {/* Spotlight shadow overlays */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80 z-0" />
 
-                  {/* Project Info */}
-                  <div className="relative z-10 flex flex-col gap-1.5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] uppercase font-bold text-amber-500 tracking-widest bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                        {proj.category}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-semibold">{proj.location}</span>
+                    {/* Project Info */}
+                    <div className="relative z-10 flex flex-col gap-1.5 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] uppercase font-bold text-amber-500 tracking-widest bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                          {proj.category}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-semibold">{proj.location}</span>
+                      </div>
+                      <h4 className="text-lg font-bold text-white tracking-tight">{proj.title}</h4>
+                      <Link
+                        to={`/gallery?cat=${proj.category.toLowerCase()}&id=${proj.id}`}
+                        className="text-xs text-white opacity-0 group-hover:opacity-100 flex items-center gap-1 hover:text-amber-500 transition-all font-semibold mt-1"
+                      >
+                        <span>View Details</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
-                    <h4 className="text-lg font-bold text-white tracking-tight">{proj.title}</h4>
-                    <Link
-                      to={`/gallery?cat=${proj.category.toLowerCase()}&id=${proj.id}`}
-                      className="text-xs text-white opacity-0 group-hover:opacity-100 flex items-center gap-1 hover:text-amber-500 transition-all font-semibold mt-1"
-                    >
-                      <span>View Details</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
                   </div>
-                </div>
-              </Card3DTilt>
+                </Card3DTilt>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          <div className="text-center mt-6">
-            <Link
-              to="/gallery"
-              className="inline-flex items-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-850 text-white font-semibold px-8 py-3.5 rounded-xl transition-all hover:border-slate-700 active:scale-95 shadow-xl hover:shadow-amber-500/5"
-            >
-              <span>View More Featured Work</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+          <motion.div variants={itemVariants} className="text-center mt-6">
+            <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="inline-block">
+              <Link
+                to="/gallery"
+                className="inline-flex items-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-850 text-white font-semibold px-8 py-3.5 rounded-xl transition-all hover:border-slate-700 active:scale-95 shadow-xl hover:shadow-amber-500/5"
+              >
+                <span>View More Featured Work</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+          </motion.div>
 
         </div>
-      </section>
+      </motion.section>
 
       {/* 5. INTERACTIVE NEWSLETTER / CTA */}
-      <section className="py-24 px-6 lg:px-12 bg-gradient-to-b from-[#020617] to-[#0a0f1e] relative overflow-hidden border-t border-slate-900">
-        
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="py-24 px-6 lg:px-12 bg-gradient-to-b from-[#020617] to-[#0a0f1e] relative overflow-hidden border-t border-slate-900"
+      >
         {/* Glow orbs */}
         <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-amber-500/5 blur-[80px] pointer-events-none" />
         <div className="absolute bottom-0 right-12 w-[300px] h-[300px] rounded-full bg-blue-500/5 blur-[90px] pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto bg-gradient-to-br from-[#0c1224] to-[#121a30] border border-slate-800/80 rounded-3xl p-8 md:p-16 text-center relative z-10 shadow-2xl">
+        <motion.div variants={itemVariants} className="max-w-4xl mx-auto bg-gradient-to-br from-[#0c1224] to-[#121a30] border border-slate-800/80 rounded-3xl p-8 md:p-16 text-center relative z-10 shadow-2xl">
           <div className="flex flex-col gap-6 max-w-xl mx-auto">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-2">
+            <motion.div variants={iconVariants} className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-2">
               <Eye className="w-6 h-6" />
-            </div>
+            </motion.div>
             
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
               Ready to Visualize Your Next Landmark?
@@ -373,22 +514,26 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-4">
-              <Link
-                to="/contact"
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-95 text-center"
-              >
-                Discuss Project
-              </Link>
-              <Link
-                to="/login"
-                className="w-full sm:w-auto border border-slate-800 bg-slate-900 hover:bg-slate-850 text-slate-300 font-semibold px-8 py-3.5 rounded-xl transition-all active:scale-95 text-center"
-              >
-                Client Dashboard
-              </Link>
+              <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="w-full sm:w-auto">
+                <Link
+                  to="/contact"
+                  className="block w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-amber-500/10 active:scale-95 text-center"
+                >
+                  Discuss Project
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="w-full sm:w-auto">
+                <Link
+                  to="/login"
+                  className="block w-full border border-slate-800 bg-slate-900 hover:bg-slate-850 text-slate-300 font-semibold px-8 py-3.5 rounded-xl transition-all active:scale-95 text-center"
+                >
+                  Client Dashboard
+                </Link>
+              </motion.div>
             </div>
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
     </div>
   );

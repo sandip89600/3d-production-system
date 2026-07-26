@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, CheckCircle2, Sparkles, Building, Layers, ShieldAlert } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
@@ -9,6 +9,97 @@ export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', projectType: 'Architecture Visualization', message: '' });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  const moveDistance = reducedMotion ? 0 : (isMobileDevice ? 20 : 80);
+  const yOffset = reducedMotion ? 0 : 15;
+  const cardYOffset = reducedMotion ? 0 : 30;
+
+  // Reusable Section Scroll Variants
+  const makeSectionVariants = (direction) => ({
+    hidden: {
+      opacity: 0,
+      x: direction === 'left' ? -moveDistance : moveDistance,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.9,
+        ease: [0.16, 1, 0.3, 1],
+        when: 'beforeChildren',
+        staggerChildren: 0.08,
+      }
+    }
+  });
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: yOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, x: reducedMotion ? 0 : (isMobileDevice ? 15 : 40) },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 1.2,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const cardContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
+      }
+    }
+  };
+
+  const cardItemVariants = {
+    hidden: { opacity: 0, y: cardYOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const iconVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut',
+      }
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -48,22 +139,36 @@ export default function Contact() {
         breadcrumbs={[{ name: 'Home', path: '/' }, { name: 'Contact Us', path: '/contact' }]}
       />
       
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-16">
+      {/* Section 1: Header */}
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-16"
+      >
         <div className="text-center max-w-2xl mx-auto flex flex-col gap-4">
-          <span className="text-xs uppercase font-bold text-amber-500 tracking-widest bg-amber-500/10 px-3 py-1 rounded-full w-fit mx-auto border border-amber-500/20">
+          <motion.span variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-widest bg-amber-500/10 px-3 py-1 rounded-full w-fit mx-auto border border-amber-500/20">
             Get In Touch
-          </span>
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">Let's Discuss Your Project</h1>
-          <p className="text-slate-400 text-base leading-relaxed">
+          </motion.span>
+          <motion.h1 variants={itemVariants} className="text-4xl font-extrabold text-white tracking-tight">Let's Discuss Your Project</motion.h1>
+          <motion.p variants={itemVariants} className="text-slate-400 text-base leading-relaxed">
             Ready to convert blueprints into photorealistic rendering assets? Send us your project details, and our architectural cg-directors will follow up.
-          </p>
+          </motion.p>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
+      {/* Section 2: Form & Map Info Grid */}
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12"
+      >
         
         {/* Left Column: Glassmorphic Form (7 cols) */}
-        <div className="lg:col-span-7">
+        <motion.div variants={imageVariants} className="lg:col-span-7">
           <Card3DTilt intensity={4} className="rounded-3xl h-full shadow-2xl">
             <div className="bg-[#0b101c]/80 backdrop-blur-md border border-slate-800 p-8 md:p-12 rounded-3xl h-full relative overflow-hidden">
               
@@ -193,50 +298,65 @@ export default function Contact() {
 
             </div>
           </Card3DTilt>
-        </div>
+        </motion.div>
 
         {/* Right Column: Contact info & Maps (5 cols) */}
         <div className="lg:col-span-5 flex flex-col gap-8 justify-between">
           
           {/* Info Details Cards */}
-          <div className="flex flex-col gap-5">
-            <div className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+          <motion.div variants={cardContainerVariants} className="flex flex-col gap-5">
+            <motion.div 
+              variants={cardItemVariants}
+              whileHover={{ y: -4, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)' }}
+              transition={{ duration: 0.3 }}
+              className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl flex items-start gap-4"
+            >
+              <motion.div variants={iconVariants} className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
                 <MapPin className="w-5 h-5" />
-              </div>
+              </motion.div>
               <div>
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-1">Corporate Office</h4>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   102, Design District, Sector 62, Noida, Uttar Pradesh, 201301, India
                 </p>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+            <motion.div 
+              variants={cardItemVariants}
+              whileHover={{ y: -4, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)' }}
+              transition={{ duration: 0.3 }}
+              className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl flex items-start gap-4"
+            >
+              <motion.div variants={iconVariants} className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
                 <Phone className="w-5 h-5" />
-              </div>
+              </motion.div>
               <div>
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-1">Call Us</h4>
                 <p className="text-xs text-slate-400">+91 98765 43210</p>
                 <p className="text-[10px] text-slate-500 mt-0.5">Mon - Fri: 9:00 AM - 6:00 PM IST</p>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+            <motion.div 
+              variants={cardItemVariants}
+              whileHover={{ y: -4, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2)' }}
+              transition={{ duration: 0.3 }}
+              className="bg-slate-900/60 border border-slate-850 p-6 rounded-2xl flex items-start gap-4"
+            >
+              <motion.div variants={iconVariants} className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
                 <Mail className="w-5 h-5" />
-              </div>
+              </motion.div>
               <div>
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-1">Email</h4>
                 <p className="text-xs text-slate-400">hello@all3dstudio.com</p>
                 <p className="text-xs text-slate-400">quotes@all3dstudio.com</p>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Map Embed (Interactive Custom Mock Iframe) */}
-          <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-[#070c17] aspect-[4/3] w-full flex items-center justify-center group shadow-xl">
+          <motion.div variants={cardItemVariants} className="relative rounded-3xl overflow-hidden border border-slate-800 bg-[#070c17] aspect-[4/3] w-full flex items-center justify-center group shadow-xl">
             {/* Map lines background representation */}
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-500 via-transparent to-transparent pointer-events-none" />
             
@@ -259,11 +379,11 @@ export default function Contact() {
                 <p className="text-[8px] text-slate-400">Sector 62, Noida, UP, India</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
 
-      </section>
+      </motion.section>
 
     </div>
   );

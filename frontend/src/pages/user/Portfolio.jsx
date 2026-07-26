@@ -11,6 +11,98 @@ const filters = ['All', 'Architecture', 'Interior', 'Exterior', 'Modeling', 'Ren
 
 export default function Portfolio() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  const moveDistance = reducedMotion ? 0 : (isMobileDevice ? 20 : 80);
+  const yOffset = reducedMotion ? 0 : 15;
+  const cardYOffset = reducedMotion ? 0 : 30;
+
+  // Reusable Section Scroll Variants
+  const makeSectionVariants = (direction) => ({
+    hidden: {
+      opacity: 0,
+      x: direction === 'left' ? -moveDistance : moveDistance,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.9,
+        ease: [0.16, 1, 0.3, 1],
+        when: 'beforeChildren',
+        staggerChildren: 0.08,
+      }
+    }
+  });
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: yOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, x: reducedMotion ? 0 : (isMobileDevice ? 15 : 40) },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 1.2,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const cardContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
+      }
+    }
+  };
+
+  const cardItemVariants = {
+    hidden: { opacity: 0, y: cardYOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const iconVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut',
+      }
+    }
+  };
+
   const catParam = searchParams.get('cat');
   const idParam = searchParams.get('id');
   const { slug } = useParams();
@@ -231,15 +323,21 @@ export default function Portfolio() {
       )}
       
       {/* Page Header */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-12">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-12"
+      >
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-900 pb-8">
           <div>
-            <span className="text-xs uppercase font-bold text-amber-500 tracking-widest block mb-2">Our Masterpieces</span>
-            <h1 className="text-4xl font-extrabold text-white tracking-tight">Portfolio</h1>
+            <motion.span variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-widest block mb-2">Our Masterpieces</motion.span>
+            <motion.h1 variants={itemVariants} className="text-4xl font-extrabold text-white tracking-tight">Portfolio</motion.h1>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex flex-wrap gap-2">
+          <motion.div variants={itemVariants} className="flex flex-wrap gap-2">
             {filters.map(filter => (
               <button
                 key={filter}
@@ -253,44 +351,59 @@ export default function Portfolio() {
                 {filter}
               </button>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Before / After Highlight Slider Section */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-20">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-20"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center bg-[#070b16]/60 border border-slate-900 rounded-3xl p-8 lg:p-12">
           <div className="lg:col-span-1 flex flex-col gap-5">
-            <span className="text-xs uppercase text-amber-500 font-bold tracking-widest">Interactive Compare</span>
-            <h3 className="text-2xl font-bold text-white tracking-tight">From CAD Topology to Photorealism</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <motion.span variants={itemVariants} className="text-xs uppercase text-amber-500 font-bold tracking-widest">Interactive Compare</motion.span>
+            <motion.h3 variants={itemVariants} className="text-2xl font-bold text-white tracking-tight">From CAD Topology to Photorealism</motion.h3>
+            <motion.p variants={itemVariants} className="text-xs text-slate-400 leading-relaxed">
               Slide the slider left and right to witness how we translate polygonal CAD meshes into light-mapped assets. We maintain perfect geometric scaling.
-            </p>
-            <div className="flex items-center gap-3 text-amber-500 font-semibold text-xs mt-2">
+            </motion.p>
+            <motion.div variants={itemVariants} className="flex items-center gap-3 text-amber-500 font-semibold text-xs mt-2">
               <span>Try dragging the center bar</span>
               <ChevronRight className="w-4 h-4 animate-ping" />
-            </div>
+            </motion.div>
           </div>
           
-          <div className="lg:col-span-2">
+          <motion.div variants={imageVariants} className="lg:col-span-2">
             <BeforeAfterSlider
               beforeImage="https://images.unsplash.com/photo-1617806118233-18e1db207faf?auto=format&fit=crop&w=1200&q=80"
               afterImage="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80"
               beforeLabel="Ambient Occlusion Clay"
               afterLabel="Raytraced Final"
             />
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Grid Canvas */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+        variants={makeSectionVariants('left')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto"
+      >
+        <motion.div variants={cardContainerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProjects.map(proj => (
-            <div
+            <motion.div
               key={proj.id}
+              variants={cardItemVariants}
+              whileHover={{ y: -8, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+              transition={{ duration: 0.3 }}
               onClick={() => openLightbox(proj)}
-              className="cursor-pointer"
+              className="cursor-pointer rounded-2xl overflow-hidden"
             >
               <Card3DTilt intensity={10} className="rounded-2xl overflow-hidden group shadow-lg">
                 <div className="bg-slate-950 border border-slate-850 aspect-[4/3] relative flex flex-col justify-end p-6">
@@ -322,10 +435,10 @@ export default function Portfolio() {
                   </div>
                 </div>
               </Card3DTilt>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Lightbox / Project details Modal */}
       <AnimatePresence>

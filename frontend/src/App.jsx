@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
+import { VisitorTrackerProvider } from './context/VisitorTrackerContext';
 
 // Public Studio Site Components & Pages (User Facing)
 import Layout from './components/public/Layout';
@@ -36,6 +37,7 @@ import DepartmentManagement from './pages/admin/developer/DepartmentManagement';
 import AllProjects from './pages/admin/developer/AllProjects';
 import SecurityLogs from './pages/admin/developer/SecurityLogs';
 import Analytics from './pages/admin/developer/Analytics';
+import LiveVisitors from './pages/admin/developer/LiveVisitors';
 
 // Admin Dashboards
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -70,7 +72,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
-          <Routes>
+          <VisitorTrackerProvider>
+            <Routes>
             {/* Public Brand Site Pages */}
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
@@ -114,6 +117,7 @@ function App() {
             <Route path="/developer/projects" element={<ProtectedRoute roles={['developer', 'admin']}><AllProjects /></ProtectedRoute>} />
             <Route path="/developer/security" element={<ProtectedRoute roles={['developer', 'admin']}><SecurityLogs /></ProtectedRoute>} />
             <Route path="/developer/analytics" element={<ProtectedRoute roles={['developer', 'admin']}><Analytics /></ProtectedRoute>} />
+            <Route path="/developer/live-visitors" element={<ProtectedRoute roles={['developer', 'admin']}><LiveVisitors /></ProtectedRoute>} />
 
             {/* Admin */}
             <Route path="/admin/dashboard" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -131,7 +135,8 @@ function App() {
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </VisitorTrackerProvider>
         </BrowserRouter>
 
         <Toaster

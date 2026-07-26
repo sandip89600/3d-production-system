@@ -13,6 +13,98 @@ import { allGalleryImages } from '../../utils/galleryData';
 
 export default function Gallery() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  const moveDistance = reducedMotion ? 0 : (isMobileDevice ? 20 : 80);
+  const yOffset = reducedMotion ? 0 : 15;
+  const cardYOffset = reducedMotion ? 0 : 30;
+
+  // Reusable Section Scroll Variants
+  const makeSectionVariants = (direction) => ({
+    hidden: {
+      opacity: 0,
+      x: direction === 'left' ? -moveDistance : moveDistance,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.9,
+        ease: [0.16, 1, 0.3, 1],
+        when: 'beforeChildren',
+        staggerChildren: 0.08,
+      }
+    }
+  });
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: yOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, x: reducedMotion ? 0 : (isMobileDevice ? 15 : 40) },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 1.2,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const cardContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
+      }
+    }
+  };
+
+  const cardItemVariants = {
+    hidden: { opacity: 0, y: cardYOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const iconVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut',
+      }
+    }
+  };
+
   const catParam = searchParams.get('cat');
   const idParam = searchParams.get('id');
 
@@ -192,26 +284,38 @@ export default function Gallery() {
     <div className="pt-28 pb-24 min-h-screen bg-[#020617] text-white">
       
       {/* Cinematic Header Banner */}
-      <section className="relative px-6 lg:px-12 max-w-7xl mx-auto mb-16">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="relative px-6 lg:px-12 max-w-7xl mx-auto mb-16"
+      >
         <div className="text-center max-w-3xl mx-auto flex flex-col gap-5">
-          <span className="text-xs uppercase font-bold text-amber-500 tracking-[0.25em] bg-amber-500/10 px-4 py-1.5 rounded-full w-fit mx-auto border border-amber-500/25">
+          <motion.span variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-[0.25em] bg-amber-500/10 px-4 py-1.5 rounded-full w-fit mx-auto border border-amber-500/25">
             Render Database
-          </span>
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
+          </motion.span>
+          <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
             Comprehensive <br />
             <span className="bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 bg-clip-text text-transparent">
               3D Studio Gallery
             </span>
-          </h1>
-          <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p variants={itemVariants} className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
             Browse through our full archive of 3D visual outputs and plans. Millimeter CAD scale and physical lighting equations applied across all projects.
-          </p>
+          </motion.p>
         </div>
-      </section>
+      </motion.section>
 
       {/* Categories Navigation Bar */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-12">
-        <div className="flex flex-wrap justify-center gap-2 border-b border-slate-900 pb-6">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-12"
+      >
+        <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2 border-b border-slate-900 pb-6">
           {filters.map((filter) => (
             <button
               key={filter}
@@ -225,13 +329,19 @@ export default function Gallery() {
               {filter}
             </button>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* Gallery Content Masonry */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+        variants={makeSectionVariants('left')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto"
+      >
         {filteredImages.length === 0 ? (
-          <div className="text-center py-20 bg-slate-900/20 border border-slate-900 rounded-3xl">
+          <motion.div variants={itemVariants} className="text-center py-20 bg-slate-900/20 border border-slate-900 rounded-3xl">
             <p className="text-slate-400 text-sm">No renderings found in this category.</p>
             <button 
               onClick={() => handleFilterClick('All')}
@@ -239,20 +349,20 @@ export default function Gallery() {
             >
               Reset Filters
             </button>
-          </div>
+          </motion.div>
         ) : (
           <>
             {/* Columns Masonry Grid */}
-            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
+            <motion.div variants={cardContainerVariants} className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
               <AnimatePresence mode="popLayout">
                 {filteredImages.slice(0, visibleCount).map((img) => (
                   <motion.div
                     layout
                     key={img.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    variants={cardItemVariants}
+                    whileHover={{ y: -8, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+                    transition={{ duration: 0.3 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.5 }}
                     className="break-inside-avoid rounded-2xl overflow-hidden shadow-xl"
                   >
                     <Card3DTilt intensity={8} className="rounded-2xl border border-slate-900 overflow-hidden shadow-2xl bg-slate-900/40">
@@ -301,23 +411,25 @@ export default function Gallery() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-            </div>
+            </motion.div>
 
             {/* Load More Button */}
             {visibleCount < filteredImages.length && (
-              <div className="text-center mt-16">
-                <button
-                  onClick={loadMore}
-                  className="group px-8 py-3.5 bg-slate-900 border border-slate-800 text-slate-200 hover:text-white rounded-full font-semibold text-sm transition-all duration-300 hover:border-slate-700 hover:bg-slate-850 flex items-center gap-2.5 mx-auto hover:shadow-lg hover:shadow-amber-500/5"
-                >
-                  <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                  Load More Projects ({filteredImages.length - visibleCount} remaining)
-                </button>
-              </div>
+              <motion.div variants={itemVariants} className="text-center mt-16">
+                <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="inline-block">
+                  <button
+                    onClick={loadMore}
+                    className="group px-8 py-3.5 bg-slate-900 border border-slate-800 text-slate-200 hover:text-white rounded-full font-semibold text-sm transition-all duration-300 hover:border-slate-700 hover:bg-slate-850 flex items-center gap-2.5 mx-auto hover:shadow-lg hover:shadow-amber-500/5 cursor-pointer"
+                  >
+                    <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
+                    Load More Projects ({filteredImages.length - visibleCount} remaining)
+                  </button>
+                </motion.div>
+              </motion.div>
             )}
           </>
         )}
-      </section>
+      </motion.section>
 
       {/* Fullscreen Lightbox Modal */}
       <AnimatePresence>

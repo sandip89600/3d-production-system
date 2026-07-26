@@ -15,6 +15,7 @@ const superAdminNav = [
   { label: 'Client Management', icon: Users, path: '/developer/users' },
   { label: 'Departments', icon: Building2, path: '/developer/departments' },
   { label: 'Analytics', icon: BarChart3, path: '/developer/analytics' },
+  { label: 'Live Visitors', icon: Activity, path: '/developer/live-visitors' },
   { label: 'Security & Logs', icon: Shield, path: '/developer/security' },
 ];
 
@@ -29,6 +30,7 @@ const adminNav = [
   { label: 'Client Management', icon: Users, path: '/developer/users' },
   { label: 'Departments', icon: Building2, path: '/developer/departments' },
   { label: 'Analytics', icon: BarChart3, path: '/developer/analytics' },
+  { label: 'Live Visitors', icon: Activity, path: '/developer/live-visitors' },
   { label: 'Security & Logs', icon: Shield, path: '/developer/security' },
 ];
 

@@ -1,10 +1,102 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Sparkles, Trophy, Users, CheckCircle, Calendar, MessageSquare } from 'lucide-react';
 import Card3DTilt from '../../components/public/Card3DTilt';
 import SEO from '../../components/public/SEO';
 
 export default function About() {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (e) => setReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+
+  const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
+  const moveDistance = reducedMotion ? 0 : (isMobileDevice ? 20 : 80);
+  const yOffset = reducedMotion ? 0 : 15;
+  const cardYOffset = reducedMotion ? 0 : 30;
+
+  // Reusable Section Scroll Variants
+  const makeSectionVariants = (direction) => ({
+    hidden: {
+      opacity: 0,
+      x: direction === 'left' ? -moveDistance : moveDistance,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.9,
+        ease: [0.16, 1, 0.3, 1],
+        when: 'beforeChildren',
+        staggerChildren: 0.08,
+      }
+    }
+  });
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: yOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut',
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, x: reducedMotion ? 0 : (isMobileDevice ? 15 : 40) },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 1.2,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const cardContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.1,
+      }
+    }
+  };
+
+  const cardItemVariants = {
+    hidden: { opacity: 0, y: cardYOffset },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      }
+    }
+  };
+
+  const iconVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: 'easeOut',
+      }
+    }
+  };
+
   const milestones = [
     { year: '2018', title: 'Studio Founded', desc: 'All 3D Studio opened its doors in Noida with a core team of three CAD artists and one workstation.' },
     { year: '2020', title: 'Luxury Real Estate Expansion', desc: 'Partnered with prominent Indian and Middle Eastern real estate developers to deliver large-scale project simulations.' },
@@ -56,28 +148,40 @@ export default function About() {
       />
       
       {/* 1. HERO SECTION */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-20">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-20"
+      >
         <div className="text-center max-w-3xl mx-auto flex flex-col gap-6">
-          <span className="text-xs uppercase font-bold text-amber-500 tracking-widest bg-amber-500/10 px-3 py-1 rounded-full w-fit mx-auto border border-amber-500/20">
+          <motion.span variants={itemVariants} className="text-xs uppercase font-bold text-amber-500 tracking-widest bg-amber-500/10 px-3 py-1 rounded-full w-fit mx-auto border border-amber-500/20">
             About All 3D Studio
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          </motion.span>
+          <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-tight">
             Crafting Digital Realms with <br />
             <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
               Precision & Cinema Artistry
             </span>
-          </h1>
-          <p className="text-slate-400 text-lg leading-relaxed">
+          </motion.h1>
+          <motion.p variants={itemVariants} className="text-slate-400 text-lg leading-relaxed">
             We are an elite collective of 3D visualizers, animators, and tech enthusiasts headquartered in Noida, Uttar Pradesh, serving real estate giants and design visionaries worldwide.
-          </p>
+          </motion.p>
         </div>
-      </section>
+      </motion.section>
 
       {/* 2. PHOTO ROW AND STORY */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-28 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-28 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
+      >
         
         {/* Decorative Grid */}
-        <div className="relative grid grid-cols-2 gap-4">
+        <motion.div variants={imageVariants} className="relative grid grid-cols-2 gap-4">
           <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 to-transparent blur-[50px] pointer-events-none" />
           <div className="rounded-2xl overflow-hidden border border-slate-800 aspect-square">
             <img
@@ -111,19 +215,19 @@ export default function About() {
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Narrative story */}
         <div className="flex flex-col gap-6">
-          <h2 className="text-3xl font-bold tracking-tight text-white">Our Story & Core Philosophy</h2>
-          <p className="text-slate-400 text-sm leading-relaxed">
+          <motion.h2 variants={itemVariants} className="text-3xl font-bold tracking-tight text-white">Our Story & Core Philosophy</motion.h2>
+          <motion.p variants={itemVariants} className="text-slate-400 text-sm leading-relaxed">
             At All 3D Studio, we believe that 3D rendering is not just a stage in the pipeline; it is the ultimate showcase of a project’s character. We began in 2018 with a vision to redefine the photorealism bar in commercial real estate marketing.
-          </p>
-          <p className="text-slate-400 text-sm leading-relaxed">
+          </motion.p>
+          <motion.p variants={itemVariants} className="text-slate-400 text-sm leading-relaxed">
             Through the adoption of physically based rendering models (PBR), raytracing hardware, and dynamic camera tracking, we ensure that every brick, shadow, and reflection behaves exactly as it would in nature. Our clients include interior design firms building high-end retail spaces, boutique hotels needing walkthrough sequences, and real estate groups pre-selling skyscraper units.
-          </p>
+          </motion.p>
           
-          <div className="flex flex-col gap-3.5 mt-2 text-slate-350">
+          <motion.div variants={itemVariants} className="flex flex-col gap-3.5 mt-2 text-slate-350">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
               <span className="text-sm font-medium">Millimeter accurate CAD translations</span>
@@ -136,93 +240,125 @@ export default function About() {
               <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
               <span className="text-sm font-medium">Fully customizable cameras and flythrough setups</span>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-      </section>
+      </motion.section>
 
       {/* 3. CORE VALUES GRID */}
-      <section className="py-20 px-6 lg:px-12 bg-[#060b16]/40 border-y border-slate-900 mb-28 relative">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="py-20 px-6 lg:px-12 bg-[#060b16]/40 border-y border-slate-900 mb-28 relative"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto flex flex-col gap-4 mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-white">Our Foundational Values</h2>
-            <p className="text-slate-400 text-sm">
+            <motion.h2 variants={itemVariants} className="text-3xl font-bold tracking-tight text-white">Our Foundational Values</motion.h2>
+            <motion.p variants={itemVariants} className="text-slate-400 text-sm">
               We focus on high-fidelity execution, ensuring that our work acts as a true sales accelerator.
-            </p>
+            </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <motion.div variants={cardContainerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {coreValues.map((v, idx) => (
-              <div key={idx} className="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl flex flex-col gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+              <motion.div 
+                key={idx} 
+                variants={cardItemVariants}
+                whileHover={{ y: -8, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3)' }}
+                transition={{ duration: 0.3 }}
+                className="bg-slate-900/60 border border-slate-800 p-6 rounded-2xl flex flex-col gap-4"
+              >
+                <motion.div variants={iconVariants} className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
                   <v.icon className="w-5 h-5" />
-                </div>
+                </motion.div>
                 <h3 className="text-base font-bold text-white tracking-wide">{v.title}</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">{v.desc}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 4. HISTORY / TIMELINE */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto mb-28">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('right')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto mb-28"
+      >
         <div className="text-center max-w-xl mx-auto mb-16 flex flex-col gap-4">
-          <h2 className="text-3xl font-bold tracking-tight text-white">Milestones & History</h2>
-          <p className="text-slate-400 text-sm">Our journey from a single workstation to a global rendering studio.</p>
+          <motion.h2 variants={itemVariants} className="text-3xl font-bold tracking-tight text-white">Milestones & History</motion.h2>
+          <motion.p variants={itemVariants} className="text-slate-400 text-sm">Our journey from a single workstation to a global rendering studio.</motion.p>
         </div>
 
-        <div className="relative border-l border-slate-800 max-w-3xl mx-auto pl-8 flex flex-col gap-12">
+        <motion.div variants={cardContainerVariants} className="relative border-l border-slate-800 max-w-3xl mx-auto pl-8 flex flex-col gap-12">
           {milestones.map((m, idx) => (
-            <div key={idx} className="relative">
+            <motion.div key={idx} variants={cardItemVariants} className="relative">
               {/* Timeline marker */}
-              <div className="absolute -left-12 top-1 w-8 h-8 rounded-full bg-slate-950 border-2 border-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <motion.div variants={iconVariants} className="absolute -left-12 top-1 w-8 h-8 rounded-full bg-slate-950 border-2 border-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <Calendar className="w-3.5 h-3.5 text-amber-500" />
-              </div>
+              </motion.div>
               <div className="flex flex-col gap-1">
                 <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">{m.year}</span>
                 <h4 className="text-lg font-bold text-white">{m.title}</h4>
                 <p className="text-sm text-slate-450 leading-relaxed max-w-2xl">{m.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* 5. TEAM GALLERY SECTION */}
-      <section className="px-6 lg:px-12 max-w-7xl mx-auto">
+      <motion.section 
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        variants={makeSectionVariants('left')}
+        className="px-6 lg:px-12 max-w-7xl mx-auto"
+      >
         <div className="text-center max-w-2xl mx-auto mb-16 flex flex-col gap-4">
-          <h2 className="text-3xl font-bold tracking-tight text-white">Meet the Visionaries</h2>
-          <p className="text-slate-400 text-sm">
+          <motion.h2 variants={itemVariants} className="text-3xl font-bold tracking-tight text-white">Meet the Visionaries</motion.h2>
+          <motion.p variants={itemVariants} className="text-slate-400 text-sm">
             The skilled texture modelers, architectural specialists, and lighting engineers who craft our photorealistic works.
-          </p>
+          </motion.p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <motion.div variants={cardContainerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {team.map((member, idx) => (
-            <Card3DTilt key={idx} intensity={8} className="rounded-2xl overflow-hidden shadow-lg border border-slate-850">
-              <div className="bg-slate-900 flex flex-col h-full">
-                <div className="aspect-[3/4] w-full overflow-hidden relative">
-                  <img
-                    src={member.image}
-                    alt={`${member.name} - ${member.role} at All 3D Studio`}
-                    loading="lazy"
-                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+            <motion.div 
+              key={idx} 
+              variants={cardItemVariants}
+              whileHover={{ y: -8, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.3)' }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl overflow-hidden"
+            >
+              <Card3DTilt intensity={8} className="rounded-2xl overflow-hidden shadow-lg border border-slate-850 h-full">
+                <div className="bg-slate-900 flex flex-col h-full">
+                  <div className="aspect-[3/4] w-full overflow-hidden relative">
+                    <img
+                      src={member.image}
+                      alt={`${member.name} - ${member.role} at All 3D Studio`}
+                      loading="lazy"
+                      className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                  </div>
+                  <div className="p-5 flex-grow flex flex-col gap-2 bg-slate-900 border-t border-slate-850">
+                    <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">
+                      {member.role}
+                    </span>
+                    <h4 className="text-base font-bold text-white tracking-tight">{member.name}</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed mt-1">{member.bio}</p>
+                  </div>
                 </div>
-                <div className="p-5 flex-grow flex flex-col gap-2 bg-slate-900 border-t border-slate-850">
-                  <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">
-                    {member.role}
-                  </span>
-                  <h4 className="text-base font-bold text-white tracking-tight">{member.name}</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed mt-1">{member.bio}</p>
-                </div>
-              </div>
-            </Card3DTilt>
+              </Card3DTilt>
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
     </div>
   );

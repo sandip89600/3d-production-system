@@ -50,9 +50,42 @@ export default function TopBar({ title, subtitle, onToggleMobileSidebar }) {
         setUnreadCount(c => c + 1);
         toast(notif.message, { icon: '🔔', duration: 4000 });
       });
-      return () => socket.off('notification');
+
+      // Real-time visitor tracking notifications for Admin / Developer
+      if (user?.role === 'admin' || user?.role === 'developer') {
+        socket.on('new_visitor', (visitorData) => {
+          toast((t) => (
+            <div className="flex flex-col gap-1 text-xs">
+              <div className="flex items-center gap-1.5 text-amber-500 font-bold uppercase tracking-wider">
+                <span>🔔 New Visitor Arrived</span>
+              </div>
+              <div className="text-slate-350 mt-1.5 space-y-0.5 leading-relaxed">
+                <p><strong className="text-slate-200">Location:</strong> {visitorData.city || 'Nashik'}, {visitorData.country || 'India'}</p>
+                <p><strong className="text-slate-200">Device:</strong> {visitorData.deviceType || 'Desktop'}</p>
+                <p><strong className="text-slate-200">Browser:</strong> {visitorData.browser || 'Chrome'}</p>
+                <p><strong className="text-slate-200">Current Page:</strong> <span className="font-mono text-emerald-400">{visitorData.visitedPage}</span></p>
+                <p><strong className="text-slate-200">Time:</strong> {visitorData.time}</p>
+              </div>
+            </div>
+          ), { 
+            duration: 6000,
+            style: {
+              background: '#070c17',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
+              borderRadius: '16px',
+              padding: '12px 16px',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
+            }
+          });
+        });
+      }
+
+      return () => {
+        socket.off('notification');
+        if (socket.off) socket.off('new_visitor');
+      };
     }
-  }, [socket]);
+  }, [socket, user?.role]);
 
   useEffect(() => {
     const handleClick = (e) => {
