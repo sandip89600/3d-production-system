@@ -149,7 +149,7 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   logger.error('Global error:', { message: err.message, stack: err.stack });
-  if (err.name === 'MulterError') {
+  if (err.name === 'MulterError' || err.message.includes('File extension') || err.message.includes('not supported') || err.message.includes('not allowed')) {
     return res.status(400).json({ success: false, message: err.message });
   }
 

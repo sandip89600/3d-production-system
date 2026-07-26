@@ -12,6 +12,8 @@ import {
 import { format, isPast, differenceInDays } from 'date-fns';
 import toast from 'react-hot-toast';
 
+import FileCard from '../../../components/FileCard';
+
 export default function DownloadProjectPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -248,26 +250,28 @@ export default function DownloadProjectPage() {
         ) : isAssignedToMe ? (
           <>
             {/* Download Files Section */}
-            <div className="glass-card p-6 md:p-8 text-center flex flex-col items-center">
-              <div className="max-w-md mb-6">
-                <h3 className="text-white font-semibold mb-2">Secure Download Link</h3>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Every download is tracked under your name. Your IP, browser user agent, and timestamp will be logged for security and audits.
-                </p>
-              </div>
-
-              <button
-                onClick={handleDownload}
-                disabled={downloading || !project.fileName}
-                className="w-full max-w-xs py-3.5 px-6 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-500/25 disabled:opacity-50"
-              >
-                <Download className="w-5 h-5" />
-                {downloading ? 'Generating link...' : 'Download Project Files'}
-              </button>
-
-              <p className="text-slate-500 text-[11px] mt-3">
-                Filename: <span className="text-slate-400 font-mono">{project.fileName || 'No files uploaded.'}</span>
+            <div className="glass-card p-6 md:p-8">
+              <h3 className="text-white font-semibold mb-1 text-base">Secure Source Files</h3>
+              <p className="text-slate-400 text-xs leading-relaxed mb-5">
+                Every download is tracked under your name. Your IP, browser user agent, and timestamp will be logged for security and audits.
               </p>
+              {project.fileName ? (
+                <FileCard 
+                  file={{
+                    _id: project.fileId || project._id,
+                    originalName: project.fileName,
+                    extension: project.fileName ? project.fileName.split('.').pop() : '',
+                    fileSize: project.fileSize,
+                    fileUrl: project.fileUrl,
+                    createdAt: project.createdAt || new Date(),
+                    compressionStatus: project.compressionStatus || 'none',
+                    compressedSize: project.compressedSize,
+                    compressedName: project.compressedName
+                  }} 
+                />
+              ) : (
+                <p className="text-slate-500 text-xs italic">No project brief file uploaded</p>
+              )}
             </div>
 
             {/* Progress Update & Deliverables Upload Form */}

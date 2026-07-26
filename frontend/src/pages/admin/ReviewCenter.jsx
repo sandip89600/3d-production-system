@@ -6,6 +6,7 @@ import { StatusBadge, PriorityBadge, ProgressBar } from '../../components/Badges
 import { CheckCircle, XCircle, Search, MessageSquare, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import FileCard from '../../components/FileCard';
 
 const getFileUrl = (path) => {
   if (!path) return '';
@@ -142,17 +143,21 @@ export default function ReviewCenter() {
 
                 {/* Project file */}
                 {selected.fileName && (
-                  <div className="mb-4 bg-white/5 rounded-xl p-3 border border-white/5">
-                    <p className="text-slate-400 text-xs font-medium mb-1">Project Brief File</p>
-                    <a
-                      href={getFileUrl(selected.fileUrl)}
-                      download={selected.fileName}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 hover:underline text-xs font-semibold"
-                    >
-                      📎 {selected.fileName}
-                    </a>
+                  <div className="mb-4 bg-white/5 rounded-xl p-4 border border-white/5">
+                    <p className="text-slate-400 text-xs font-semibold mb-3">Project Brief File</p>
+                    <FileCard 
+                      file={{
+                        _id: selected.fileId || selected._id,
+                        originalName: selected.fileName,
+                        extension: selected.fileName ? selected.fileName.split('.').pop() : '',
+                        fileSize: selected.fileSize,
+                        fileUrl: selected.fileUrl,
+                        createdAt: selected.createdAt || new Date(),
+                        compressionStatus: selected.compressionStatus || 'none',
+                        compressedSize: selected.compressedSize,
+                        compressedName: selected.compressedName
+                      }}
+                    />
                   </div>
                 )}
 
@@ -160,31 +165,22 @@ export default function ReviewCenter() {
                 {logsData?.logs?.length > 0 && (
                   <div className="mb-4">
                     <p className="text-slate-400 text-xs font-medium mb-2">Progress History</p>
-                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                       {logsData.logs.map(log => (
-                        <div key={log._id} className="flex items-start gap-3 bg-white/3 rounded-lg p-2">
+                        <div key={log._id} className="flex items-start gap-3 bg-white/3 rounded-lg p-2.5">
                           <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold flex-shrink-0">
                             {log.day}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mb-1">
                               <span className="text-white text-xs font-semibold">{log.progressPercentage}%</span>
                               <span className="text-slate-500 text-xs">{format(new Date(log.date), 'dd MMM')}</span>
                             </div>
-                            {log.notes && <p className="text-slate-400 text-xs truncate mt-0.5">{log.notes}</p>}
+                            {log.notes && <p className="text-slate-400 text-xs mt-0.5">{log.notes}</p>}
                             {log.uploadedFiles?.length > 0 && (
-                              <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                                {log.uploadedFiles.map(f => (
-                                  <a
-                                    key={f.fileName}
-                                    href={getFileUrl(f.fileUrl)}
-                                    download={f.fileName}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-2 py-0.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-md text-[10px] hover:underline flex items-center gap-1 transition-all"
-                                  >
-                                    📎 {f.fileName}
-                                  </a>
+                              <div className="mt-3 space-y-2 w-full">
+                                {log.uploadedFiles.map((f, idx) => (
+                                  <FileCard key={idx} file={f} />
                                 ))}
                               </div>
                             )}

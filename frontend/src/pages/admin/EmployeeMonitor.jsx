@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import { StatusBadge, ProgressBar } from '../../components/Badges';
 import { Search, Eye } from 'lucide-react';
 import { format } from 'date-fns';
+import FileCard from '../../components/FileCard';
 
 export default function EmployeeMonitor() {
   const [search, setSearch] = useState('');
@@ -109,6 +110,13 @@ export default function EmployeeMonitor() {
                       </div>
                       {log.notes && <p className="text-slate-400 text-xs mt-1">{log.notes}</p>}
                       {log.blockers && <p className="text-red-400 text-xs mt-1">⚠️ {log.blockers}</p>}
+                      {log.uploadedFiles?.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {log.uploadedFiles.map((f, idx) => (
+                            <FileCard key={idx} file={f} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

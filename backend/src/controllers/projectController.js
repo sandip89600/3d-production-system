@@ -121,6 +121,16 @@ const createProject = async (req, res) => {
 
     if (req.file) {
       try {
+        const FileModel = require('../models/File');
+        const duplicate = await FileModel.findOne({
+          originalName: req.file.originalname,
+          isDeleted: false
+        });
+        if (duplicate) {
+          await Project.findByIdAndDelete(project._id);
+          return res.status(400).json({ success: false, message: `Security alert: A file named "${req.file.originalname}" already exists in the system. Please rename the file before uploading.` });
+        }
+
         // Upload to cloud storage (which will query the project using project._id to fetch its human-readable projectId code)
         const uploaded = await storageService.uploadFile({
           buffer: req.file.buffer,
@@ -277,6 +287,20 @@ const updateProgress = async (req, res) => {
 
     const dayNum = day || (assignment.totalDaysWorked + 1);
 
+    // Validate duplicate filenames before uploading
+    if (req.files && req.files.length > 0) {
+      const FileModel = require('../models/File');
+      for (const f of req.files) {
+        const duplicate = await FileModel.findOne({
+          originalName: f.originalname,
+          isDeleted: false
+        });
+        if (duplicate) {
+          return res.status(400).json({ success: false, message: `Security alert: A file named "${f.originalname}" already exists in the system. Please rename the file before uploading.` });
+        }
+      }
+    }
+
     // Upsert progress log for this day
     const log = await ProgressLog.findOneAndUpdate(
       { assignment: assignment._id, day: dayNum },
@@ -299,11 +323,18 @@ const updateProgress = async (req, res) => {
                   uploadedBy: req.user._id,
                   projectId: project._id,
                 });
+                const fileRec = up.fileRecord;
                 return {
-                  fileName: f.originalname,
+                  fileId: fileRec._id,
+                  fileName: fileRec.originalName,
                   fileUrl: up.url,
-                  fileSize: f.size,
-                  fileType: path.extname(f.originalname),
+                  fileSize: fileRec.fileSize,
+                  fileType: fileRec.extension,
+                  originalExtension: fileRec.originalExtension,
+                  compressedName: fileRec.compressedName,
+                  compressionStatus: fileRec.compressionStatus,
+                  compressedSize: fileRec.compressedSize,
+                  uploadedAt: fileRec.uploadDate,
                 };
               })
             )
@@ -516,12 +547,7 @@ const getSecureDownloadUrl = async (req, res) => {
 
     await logActivity(req, 'project_download', `Downloaded file for project: ${project.name} (${project.projectId})`, { projectId: project._id });
 
-    // Generate signed URL (expires in 24 hours = 86400 seconds)
-    let downloadUrl = project.fileUrl;
-    if (fileRecord) {
-      downloadUrl = await storageService.getSignedUrl(fileRecord._id, 86400);
-    }
-
+    const downloadUrl = `${req.protocol}://${req.get('host')}/api/upload/${fileRecord._id}/download`;
     res.json({ success: true, downloadUrl });
   } catch (error) {
     console.error('Error generating secure download URL:', error);
@@ -638,11 +664,63 @@ const downloadProjectByToken = async (req, res) => {
       deviceType: getDeviceType(req.headers['user-agent']),
     });
 
-    // Generate signed URL (expires in 1 hour for immediate download consumption)
-    const downloadUrl = await storageService.getSignedUrl(fileRecord._id, 3600);
+    const dlName = fileRecord.compressionStatus === 'compressed' ? fileRecord.compressedName : fileRecord.originalName;
 
-    // Redirect user browser to download the file directly
-    res.redirect(downloadUrl);
+    if (fileRecord.provider === 'local') {
+      const path = require('path');
+      const fs = require('fs');
+      const relPath = fileRecord.storageKey.startsWith('/') ? fileRecord.storageKey.slice(1) : fileRecord.storageKey;
+      const fullPath = path.join(__dirname, '../../../', relPath);
+
+      if (!fs.existsSync(fullPath)) {
+        return res.status(404).send('<h1>Error</h1><p>File not found on local disk.</p>');
+      }
+      return res.download(fullPath, dlName);
+    } else {
+      if (fileRecord.provider === 's3') {
+        try {
+          const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+          const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+          
+          const s3Client = new S3Client({
+            region: process.env.AWS_REGION || 'ap-south-1',
+            credentials: {
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            },
+          });
+          const command = new GetObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: fileRecord.storageKey,
+            ResponseContentDisposition: `attachment; filename="${dlName}"`
+          });
+          const downloadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+          return res.redirect(downloadUrl);
+        } catch (s3Err) {
+          console.error('[DownloadToken] S3 signed URL failed, falling back to stream:', s3Err);
+        }
+      }
+      
+      const response = await fetch(fileRecord.url);
+      if (!response.ok) {
+        return res.status(500).send('<h1>Error</h1><p>Failed to stream file from cloud.</p>');
+      }
+      res.setHeader('Content-Type', fileRecord.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${dlName}"`);
+      const { Readable } = require('stream');
+      const reader = response.body.getReader();
+      const nodeStream = new Readable({
+        async read() {
+          const { done, value } = await reader.read();
+          if (done) {
+            this.push(null);
+          } else {
+            this.push(Buffer.from(value));
+          }
+        }
+      });
+      nodeStream.pipe(res);
+    }
   } catch (error) {
     console.error('Error during token download redirect:', error);
     res.status(500).send('<h1>Server Error</h1><p>An internal server error occurred.</p>');

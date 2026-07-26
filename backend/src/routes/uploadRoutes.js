@@ -7,6 +7,7 @@ const {
   getFileById,
   deleteFile,
   getSignedUrl,
+  downloadFile,
 } = require('../controllers/uploadController');
 const { authenticateJWT, requireRole } = require('../middleware/auth');
 const {
@@ -42,6 +43,9 @@ router.post(
 
 // GET /api/upload/:id  — Get file metadata + access URL
 router.get('/:id', getFileById);
+
+// GET /api/upload/:id/download  — Stream and force download a file directly
+router.get('/:id/download', downloadFile);
 
 // GET /api/upload/:id/signed-url  — Generate time-limited signed URL (S3 private)
 router.get('/:id/signed-url', getSignedUrl);

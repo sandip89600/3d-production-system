@@ -13,6 +13,16 @@ const fileSchema = new mongoose.Schema(
     mimeType: { type: String, required: true },
     fileSize: { type: Number, required: true },       // bytes
     extension: { type: String },
+    originalExtension: { type: String },
+    compressedName: { type: String, default: null },
+    originalSize: { type: Number },
+    compressedSize: { type: Number, default: null },
+    compressionStatus: {
+      type: String,
+      enum: ['none', 'compressed', 'failed'],
+      default: 'none'
+    },
+    uploadDate: { type: Date, default: Date.now },
 
     // ─── Storage ──────────────────────────────────────────────
     provider: {

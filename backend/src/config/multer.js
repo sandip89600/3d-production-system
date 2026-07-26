@@ -6,10 +6,9 @@ const multer = require('multer');
  */
 
 const ALLOWED_EXTENSIONS = [
-  '.zip', '.rar', '.blend', '.max', '.fbx', '.obj', '.stl',
   '.jpg', '.jpeg', '.png', '.webp',
-  '.pdf', '.mp4', '.avi',
-  '.doc', '.docx', '.xls', '.xlsx', '.txt',
+  '.dwg', '.dxf', '.skp', '.dae',
+  '.3ds', '.max', '.psd', '.cdr', '.zip'
 ];
 
 const fileFilter = (req, file, cb) => {
@@ -18,7 +17,7 @@ const fileFilter = (req, file, cb) => {
   if (ALLOWED_EXTENSIONS.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error(`File extension "${ext}" is not allowed.`), false);
+    cb(new Error(`File extension "${ext}" is not supported. Supported: ${ALLOWED_EXTENSIONS.map(e => e.slice(1)).join(', ')}`), false);
   }
 };
 

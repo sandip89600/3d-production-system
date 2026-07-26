@@ -6,6 +6,7 @@ import { StatusBadge, PriorityBadge, ProgressBar } from '../../../components/Bad
 import { Send, Upload, FileText, TrendingUp, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import FileCard from '../../../components/FileCard';
 
 const getFileUrl = (path) => {
   if (!path) return '';
@@ -161,22 +162,12 @@ export default function MyProjects() {
                                     {log.notes && <p className="text-slate-400 text-xs mb-1">{log.notes}</p>}
                                     {log.blockers && <p className="text-red-400 text-xs">⚠️ {log.blockers}</p>}
                                     {log.uploadedFiles?.length > 0 && (
-                                      <div className="flex gap-1 mt-1 flex-wrap">
-                                        {log.uploadedFiles.map(f => (
-                                          <a
-                                            key={f.fileName}
-                                            href={getFileUrl(f.fileUrl)}
-                                            download={f.fileName}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-md text-xs hover:bg-blue-500/30 hover:underline transition-colors flex items-center gap-1 cursor-pointer"
-                                          >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                                            {f.fileName}
-                                          </a>
-                                        ))}
-                                      </div>
-                                    )}
+                                       <div className="mt-2.5 space-y-2 max-w-xl">
+                                         {log.uploadedFiles.map((f, idx) => (
+                                           <FileCard key={idx} file={f} />
+                                         ))}
+                                       </div>
+                                     )}
                                   </div>
                                 </div>
                               ))}

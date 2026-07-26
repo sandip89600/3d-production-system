@@ -49,15 +49,48 @@ const uploadFile = async ({
   ipAddress = null,
   userAgent = null,
 }) => {
-  const fileName = generateFileName(originalName);
-  const ext = require('path').extname(originalName).toLowerCase();
+  const path = require('path');
+  const ext = path.extname(originalName).toLowerCase();
+  
+  let finalBuffer = buffer;
+  let finalMimeType = mimeType;
+  let finalFileSize = fileSize;
+  let finalOriginalName = originalName;
+  let compressionStatus = 'none';
+  let compressedName = null;
+  let compressedSize = null;
+
+  const MAX_LIMIT = 100 * 1024 * 1024; // 100 MB
+  if (fileSize > MAX_LIMIT) {
+    try {
+      const AdmZip = require('adm-zip');
+      const zip = new AdmZip();
+      zip.addFile(originalName, buffer);
+      
+      finalBuffer = zip.toBuffer();
+      finalMimeType = 'application/zip';
+      finalFileSize = finalBuffer.length;
+      
+      const parsed = path.parse(originalName);
+      finalOriginalName = parsed.ext.toLowerCase() === '.zip' ? originalName : `${parsed.name}.zip`;
+      
+      compressionStatus = 'compressed';
+      compressedName = finalOriginalName;
+      compressedSize = finalFileSize;
+    } catch (err) {
+      console.error('[StorageService] In-memory ZIP compression failed:', err);
+      compressionStatus = 'failed';
+    }
+  }
+
+  const fileName = generateFileName(finalOriginalName);
   
   // Delegate physical upload to the active provider
   const { url, storageKey } = await activeProvider.upload(
-    buffer,
+    finalBuffer,
     folder,
     fileName,
-    mimeType,
+    finalMimeType,
     { uploadedBy, projectId }
   );
 
@@ -65,9 +98,14 @@ const uploadFile = async ({
   const fileRecord = await File.create({
     originalName,
     fileName,
-    mimeType,
-    fileSize,
-    extension: ext,
+    mimeType: finalMimeType,
+    fileSize: finalFileSize,
+    extension: path.extname(finalOriginalName).toLowerCase(),
+    originalExtension: ext,
+    compressedName,
+    originalSize: fileSize,
+    compressedSize,
+    compressionStatus,
     provider: process.env.STORAGE_PROVIDER || 'local',
     url,
     storageKey,
