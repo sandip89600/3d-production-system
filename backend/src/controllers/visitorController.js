@@ -8,17 +8,32 @@ const PDFDocument = require('pdfkit');
 
 let socketIO = null;
 
+const User = require('../models/User');
+
 // Helper to set Socket.IO instance
 const setIO = (io) => {
   socketIO = io;
   
   // Real-time visitor tracking listener
-  io.on('connection', (socket) => {
-    // Admins join admin_analytics room to get live streams
-    const userRole = socket.handshake.auth?.role;
+  io.on('connection', async (socket) => {
+    let userRole = socket.handshake.auth?.role;
+    const userId = socket.handshake.auth?.userId;
+
+    // Secure database lookup fallback if role is missing in handshake auth object
+    if (!userRole && userId) {
+      try {
+        const user = await User.findById(userId);
+        if (user) {
+          userRole = user.role;
+        }
+      } catch (err) {
+        logger.error('Error resolving user role during socket handshake:', err);
+      }
+    }
+
     if (userRole === 'admin' || userRole === 'developer') {
       socket.join('admin_analytics');
-      logger.info(`🔌 Admin/Developer socket joined analytics room: ${socket.id}`);
+      logger.info(`🔌 Securely joined admin_analytics room for user: ${userId}`);
       
       // Send initial online count immediately on connection
       sendActiveVisitorsCount();

@@ -12,7 +12,7 @@ import StatsCard from '../../../components/StatsCard';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function LiveVisitors() {
-  const { user } = useAuth();
+  const { user, socket } = useAuth();
   const [stats, setStats] = useState({
     online: 0,
     today: 0,
@@ -42,14 +42,11 @@ export default function LiveVisitors() {
   
   // Active selected visitor for sidebar flow details
   const [selectedVisitor, setSelectedVisitor] = useState(null);
-  
-  // Socket ref
-  const socketRef = useRef(null);
 
   // Load visitor statistics & live visitors list
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const res = await axios.get(`${API_URL}/api/visitor-analytics/admin/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -64,7 +61,7 @@ export default function LiveVisitors() {
   const fetchVisitorsList = async (pageNumber = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const params = {
         page: pageNumber,
         search,
@@ -100,91 +97,88 @@ export default function LiveVisitors() {
     fetchStats();
     fetchVisitorsList(1);
 
-    const token = localStorage.getItem('token');
-    socketRef.current = io(API_URL, {
-      auth: { token, role: user?.role }
-    });
+    if (socket) {
+      // Handle real-time visitor landing alerts
+      socket.on('new_visitor', (data) => {
+        // Prepend to state list if not already present
+        setVisitors(prev => {
+          if (prev.some(v => v.sessionId === data.sessionId)) return prev;
+          
+          const newVisitor = {
+            sessionId: data.sessionId,
+            visitorId: data.visitorId,
+            ipAddress: 'Checking...',
+            country: data.country,
+            state: '',
+            city: data.city,
+            timezone: 'Asia/Kolkata',
+            latitude: null,
+            longitude: null,
+            isp: 'ISP Lookup',
+            browser: data.browser,
+            browserVersion: '',
+            os: '',
+            deviceType: data.deviceType,
+            screenResolution: '',
+            language: '',
+            userAgent: '',
+            referralSource: 'Direct',
+            landingPage: data.visitedPage,
+            visitStart: new Date(data.timestamp),
+            visitEnd: new Date(data.timestamp),
+            duration: 0,
+            exitPage: data.visitedPage,
+            status: 'online',
+            isNewVisitor: true,
+            timeline: [{
+              page: data.visitedPage,
+              type: 'page_view',
+              timestamp: new Date(data.timestamp),
+              meta: { title: 'Landing Page' }
+            }]
+          };
+          return [newVisitor, ...prev];
+        });
 
-    // Handle real-time visitor landing alerts
-    socketRef.current.on('new_visitor', (data) => {
-      // Prepend to state list if not already present
-      setVisitors(prev => {
-        if (prev.some(v => v.sessionId === data.sessionId)) return prev;
-        
-        const newVisitor = {
-          sessionId: data.sessionId,
-          visitorId: data.visitorId,
-          ipAddress: 'Checking...',
-          country: data.country,
-          state: '',
-          city: data.city,
-          timezone: 'Asia/Kolkata',
-          latitude: null,
-          longitude: null,
-          isp: 'ISP Lookup',
-          browser: data.browser,
-          browserVersion: '',
-          os: '',
-          deviceType: data.deviceType,
-          screenResolution: '',
-          language: '',
-          userAgent: '',
-          referralSource: 'Direct',
-          landingPage: data.visitedPage,
-          visitStart: new Date(data.timestamp),
-          visitEnd: new Date(data.timestamp),
-          duration: 0,
-          exitPage: data.visitedPage,
-          status: 'online',
-          isNewVisitor: true,
-          timeline: [{
-            page: data.visitedPage,
-            type: 'page_view',
-            timestamp: new Date(data.timestamp),
-            meta: { title: 'Landing Page' }
-          }]
-        };
-        return [newVisitor, ...prev];
+        // Increment stats count live
+        setStats(prev => ({
+          ...prev,
+          online: prev.online + 1,
+          today: prev.today + 1,
+          total: prev.total + 1
+        }));
       });
 
-      // Increment stats count live
-      setStats(prev => ({
-        ...prev,
-        online: prev.online + 1,
-        today: prev.today + 1,
-        total: prev.total + 1
-      }));
-    });
-
-    // Handle real-time visitor navigations
-    socketRef.current.on('visitor_event', (eventData) => {
-      setVisitors(prev => {
-        return prev.map(v => {
-          if (v.sessionId === eventData.sessionId) {
-            const isPageView = eventData.type === 'page_view';
-            const updatedTimeline = [...(v.timeline || []), {
-              page: eventData.page,
-              type: eventData.type,
-              timestamp: new Date(eventData.timestamp),
-              meta: eventData.meta
-            }];
-            return {
-              ...v,
-              visitEnd: new Date(eventData.timestamp),
-              duration: Math.max(0, Math.floor((new Date(eventData.timestamp).getTime() - new Date(v.visitStart).getTime()) / 1000)),
-              exitPage: isPageView ? eventData.page : v.exitPage,
-              timeline: updatedTimeline
-            };
-          }
-          return v;
+      // Handle real-time visitor navigations
+      socket.on('visitor_event', (eventData) => {
+        setVisitors(prev => {
+          return prev.map(v => {
+            if (v.sessionId === eventData.sessionId) {
+              const isPageView = eventData.type === 'page_view';
+              const updatedTimeline = [...(v.timeline || []), {
+                page: eventData.page,
+                type: eventData.type,
+                timestamp: new Date(eventData.timestamp),
+                meta: eventData.meta
+              }];
+              return {
+                ...v,
+                visitEnd: new Date(eventData.timestamp),
+                duration: Math.max(0, Math.floor((new Date(eventData.timestamp).getTime() - new Date(v.visitStart).getTime()) / 1000)),
+                exitPage: isPageView ? eventData.page : v.exitPage,
+                timeline: updatedTimeline
+              };
+            }
+            return v;
+          });
         });
       });
-    });
 
-    // Handle online counts updates
-    socketRef.current.on('active_visitors_update', (data) => {
-      setStats(prev => ({ ...prev, online: data.activeCount }));
-    });
+      // Handle online counts updates
+      socket.on('active_visitors_update', (data) => {
+        setStats(prev => ({ ...prev, online: data.activeCount }));
+      });
+    }
 
     // Refresh statistics periodically (every 30 seconds)
     const statsTimer = setInterval(fetchStats, 30000);
@@ -206,14 +200,18 @@ export default function LiveVisitors() {
     }, 1000);
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect();
+      if (socket) {
+        socket.off('new_visitor');
+        socket.off('visitor_event');
+        socket.off('active_visitors_update');
+      }
       clearInterval(statsTimer);
       clearInterval(durationTicker);
     };
-  }, []);
+  }, [socket]);
 
   const handleExport = (format) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
     window.open(`${API_URL}/api/visitor-analytics/admin/export?format=${format}&token=${token}`, '_blank');
   };
 

@@ -11,9 +11,9 @@ export const AuthProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const queryClient = useQueryClient();
 
-  const connectSocket = useCallback((userId) => {
+  const connectSocket = useCallback((userId, role) => {
     const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
-      auth: { userId },
+      auth: { userId, role },
       transports: ['websocket'],
     });
     s.on('connect', () => console.log('Socket connected'));
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       );
       const { data } = await Promise.race([authAPI.getMe(), timeout]);
       setUser(data.user);
-      connectSocket(data.user._id);
+      connectSocket(data.user._id, data.user.role);
     } catch (err) {
       if (err.response?.status === 401 || err.response?.status === 403) {
         localStorage.removeItem('accessToken');
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
-    connectSocket(data.user._id);
+    connectSocket(data.user._id, data.user.role);
     return { success: true, user: data.user };
   };
 
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
-    connectSocket(data.user._id);
+    connectSocket(data.user._id, data.user.role);
     return { success: true, user: data.user };
   };
 
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
-    connectSocket(data.user._id);
+    connectSocket(data.user._id, data.user.role);
     return { success: true, user: data.user };
   };
 
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
-    connectSocket(data.user._id);
+    connectSocket(data.user._id, data.user.role);
     return { success: true, user: data.user };
   };
 
