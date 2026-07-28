@@ -12,7 +12,9 @@ import StatsCard from '../../../components/StatsCard';
 
 // Get API base URL depending on env (with dynamic local hostname fallback for mobile/tablet testing in local network)
 const getApiUrl = () => {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+  }
   return `${window.location.protocol}//${window.location.hostname}:5000`;
 };
 const API_URL = getApiUrl();
