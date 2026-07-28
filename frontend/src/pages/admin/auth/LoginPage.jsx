@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { Eye, EyeOff, Boxes, Shield, Zap, Lock } from 'lucide-react';
 import GoogleAuthButton from '../../../components/public/GoogleAuthButton';
 import toast from 'react-hot-toast';
+import { authAPI } from '../../../api';
 
 const roleRedirects = {
   developer: '/developer/dashboard',
@@ -38,6 +39,15 @@ export default function LoginPage({ portalRole = 'employee' }) {
   const [twoFA, setTwoFA] = useState({ required: false, token: '000000' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [canCreateAdmin, setCanCreateAdmin] = useState(true);
+
+  useEffect(() => {
+    if (portalRole === 'admin') {
+      authAPI.getAdminCount()
+        .then(({ data }) => setCanCreateAdmin(data.canCreate))
+        .catch(err => console.error('Failed to fetch admin count:', err));
+    }
+  }, [portalRole]);
 
   const details = portalDetails[portalRole] || portalDetails.employee;
 
@@ -264,7 +274,18 @@ export default function LoginPage({ portalRole = 'employee' }) {
             <div className="text-center mt-6 text-xs text-slate-400">
               <p>
                 Don't have an account?{' '}
-                <Link to="/staff/signup" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                <Link to="/employee/signup" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                  Create account
+                </Link>
+              </p>
+            </div>
+          )}
+
+          {portalRole === 'admin' && canCreateAdmin && (
+            <div className="text-center mt-6 text-xs text-slate-400">
+              <p>
+                Don't have an account?{' '}
+                <Link to="/admin/signup" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
                   Create account
                 </Link>
               </p>

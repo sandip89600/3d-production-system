@@ -21,6 +21,7 @@ export const authAPI = {
   forgotPasswordMobile: (mobile) => api.post('/auth/forgot-password/mobile', { mobile }),
   verifyOTP: (emailOrMobile, otp) => api.post('/auth/verify-otp', { emailOrMobile, otp }),
   resetPassword: (data) => api.post('/auth/reset-password', data),
+  getAdminCount: () => api.get('/auth/admin-count'),
 };
 
 export const profileAPI = {

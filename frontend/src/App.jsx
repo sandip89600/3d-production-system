@@ -53,6 +53,7 @@ import AvailableProjects from './pages/admin/employee/AvailableProjects';
 import MyProjects from './pages/admin/employee/MyProjects';
 import NotificationCenter from './pages/admin/employee/NotificationCenter';
 import DownloadProjectPage from './pages/admin/employee/DownloadProjectPage';
+import EmployeeProfile from './pages/admin/employee/EmployeeProfile';
 
 // Profile Page (Shared Portal Profile)
 import ProfilePage from './pages/ProfilePage';
@@ -97,6 +98,9 @@ function App() {
             <Route path="/admin/login" element={<PublicRoute><LoginPage portalRole="admin" /></PublicRoute>} />
             <Route path="/developer/login" element={<PublicRoute><LoginPage portalRole="developer" /></PublicRoute>} />
             <Route path="/staff/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+            <Route path="/admin/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+            <Route path="/employee/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+            <Route path="/developer/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
             <Route path="/admin/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
             <Route path="/admin/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
             <Route path="/admin/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
@@ -132,6 +136,7 @@ function App() {
             <Route path="/employee/available" element={<ProtectedRoute roles={['employee']}><AvailableProjects /></ProtectedRoute>} />
             <Route path="/employee/my-projects" element={<ProtectedRoute roles={['employee']}><MyProjects /></ProtectedRoute>} />
             <Route path="/employee/notifications" element={<ProtectedRoute roles={['employee']}><NotificationCenter /></ProtectedRoute>} />
+            <Route path="/employee/profile" element={<ProtectedRoute roles={['employee']}><EmployeeProfile /></ProtectedRoute>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />

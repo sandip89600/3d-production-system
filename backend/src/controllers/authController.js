@@ -276,6 +276,13 @@ const register = async (req, res) => {
     
     // Enforcement: public signup should always register client roles
     const targetRole = role || 'client';
+
+    if (targetRole === 'admin') {
+      const activeAdminCount = await User.countDocuments({ role: 'admin', isActive: true });
+      if (activeAdminCount >= 3) {
+        return res.status(400).json({ success: false, message: 'Maximum limit of 3 Admin accounts has been reached.' });
+      }
+    }
     
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
@@ -880,10 +887,19 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const getAdminCount = async (req, res) => {
+  try {
+    const count = await User.countDocuments({ role: 'admin', isActive: true });
+    res.json({ success: true, count, limit: 3, canCreate: count < 3 });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   login, register, refresh, logout, getMe,
   setup2FA, verify2FA, disable2FA,
   changePassword,
   forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword,
-  verifyEmail, googleLogin, googleSignup
+  verifyEmail, googleLogin, googleSignup, getAdminCount
 };

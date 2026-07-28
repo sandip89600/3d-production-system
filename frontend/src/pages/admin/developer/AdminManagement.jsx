@@ -23,6 +23,12 @@ export default function AdminManagement() {
     queryFn: () => departmentsAPI.getAll().then(r => r.data),
   });
 
+  const { data: adminCountData } = useQuery({
+    queryKey: ['admin-count'],
+    queryFn: () => import('../../../api').then(m => m.authAPI.getAdminCount()).then(r => r.data),
+    refetchInterval: 30000,
+  });
+
   const { data: perfData } = useQuery({
     queryKey: ['performance', activeRole],
     queryFn: () => {
@@ -38,7 +44,8 @@ export default function AdminManagement() {
     mutationFn: (data) => usersAPI.create({ ...data, role: activeRole }),
     onSuccess: () => {
       toast.success(`${activeRole === 'admin' ? 'Admin' : 'Employee'} created successfully`);
-      qc.invalidateQueries(['users', activeRole]);
+      qc.invalidateQueries({ queryKey: ['users', activeRole] });
+      qc.invalidateQueries({ queryKey: ['admin-count'] });
       setShowModal(false);
       setForm({ name: '', email: '', password: '', adminCode: '', department: '' });
     },
@@ -49,7 +56,8 @@ export default function AdminManagement() {
     mutationFn: ({ id, isActive }) => usersAPI.update(id, { isActive }),
     onSuccess: () => {
       toast.success('User status updated');
-      qc.invalidateQueries(['users', activeRole]);
+      qc.invalidateQueries({ queryKey: ['users', activeRole] });
+      qc.invalidateQueries({ queryKey: ['admin-count'] });
     },
   });
 
@@ -57,7 +65,8 @@ export default function AdminManagement() {
     mutationFn: (id) => usersAPI.delete(id),
     onSuccess: (data) => {
       toast.success(data.message || 'User deleted successfully');
-      qc.invalidateQueries(['users', activeRole]);
+      qc.invalidateQueries({ queryKey: ['users', activeRole] });
+      qc.invalidateQueries({ queryKey: ['admin-count'] });
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete user'),
   });
@@ -79,7 +88,8 @@ export default function AdminManagement() {
     mutationFn: ({ id, data }) => usersAPI.update(id, data),
     onSuccess: () => {
       toast.success(`${activeRole === 'admin' ? 'Admin' : 'Employee'} details updated successfully`);
-      qc.invalidateQueries(['users', activeRole]);
+      qc.invalidateQueries({ queryKey: ['users', activeRole] });
+      qc.invalidateQueries({ queryKey: ['admin-count'] });
       setEditingUser(null);
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Error updating user'),
@@ -151,10 +161,16 @@ export default function AdminManagement() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Add {activeRole === 'admin' ? 'Admin' : 'Employee'}
-          </button>
+          {activeRole === 'admin' && adminCountData?.count >= 3 ? (
+            <div className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/25 px-3 py-2 rounded-xl flex items-center gap-1.5 flex-shrink-0 animate-fade-in">
+              <span>Admin Limit Reached (3/3)</span>
+            </div>
+          ) : (
+            <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2 flex-shrink-0">
+              <Plus className="w-4 h-4" />
+              Add {activeRole === 'admin' ? 'Admin' : 'Employee'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -172,7 +188,7 @@ export default function AdminManagement() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                      {user.adminCode || user.name.charAt(0)}
+                      {user.name.charAt(0)}
                     </div>
                     <div>
                       <h3 className="text-white font-semibold text-sm">{user.name}</h3>

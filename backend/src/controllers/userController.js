@@ -52,9 +52,15 @@ const createUser = async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ success: false, message: 'Email already in use' });
 
-    if (role === 'admin' && adminCode) {
-      const existingCode = await User.findOne({ adminCode: adminCode.toUpperCase() });
-      if (existingCode) return res.status(400).json({ success: false, message: 'Admin code already in use' });
+    if (role === 'admin') {
+      const activeAdminCount = await User.countDocuments({ role: 'admin', isActive: true });
+      if (activeAdminCount >= 3) {
+        return res.status(400).json({ success: false, message: 'Maximum limit of 3 active Admin accounts has been reached.' });
+      }
+      if (adminCode) {
+        const existingCode = await User.findOne({ adminCode: adminCode.toUpperCase() });
+        if (existingCode) return res.status(400).json({ success: false, message: 'Admin code already in use' });
+      }
     }
 
     const user = await User.create({
@@ -91,8 +97,20 @@ const updateUser = async (req, res) => {
       if (existing) return res.status(400).json({ success: false, message: 'Email already in use' });
     }
 
-    // Check duplicate adminCode for admins
+    // Check duplicate adminCode for admins and validate admin count limits
     const targetRole = role || currentUser.role;
+    const targetIsActive = isActive !== undefined ? isActive : currentUser.isActive;
+
+    if (targetRole === 'admin' && targetIsActive) {
+      const isAlreadyActiveAdmin = currentUser.role === 'admin' && currentUser.isActive;
+      if (!isAlreadyActiveAdmin) {
+        const activeAdminCount = await User.countDocuments({ role: 'admin', isActive: true });
+        if (activeAdminCount >= 3) {
+          return res.status(400).json({ success: false, message: 'Maximum limit of 3 active Admin accounts has been reached.' });
+        }
+      }
+    }
+
     if (targetRole === 'admin' && adminCode && adminCode.toUpperCase() !== currentUser.adminCode) {
       const existingCode = await User.findOne({ adminCode: adminCode.toUpperCase() });
       if (existingCode) return res.status(400).json({ success: false, message: 'Admin code already in use' });

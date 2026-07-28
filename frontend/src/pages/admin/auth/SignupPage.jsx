@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import { Eye, EyeOff, Boxes, Shield, Zap, Lock, User, Mail, Phone, Users, Landmark, ArrowRight } from 'lucide-react';
-import { departmentsAPI } from '../../../api';
+import { Eye, EyeOff, Boxes, Shield, Zap, Lock, User, Mail, Phone, Users, Landmark, ArrowRight, AlertTriangle } from 'lucide-react';
+import { departmentsAPI, authAPI } from '../../../api';
 import toast from 'react-hot-toast';
 
 export default function SignupPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  
+
+  const isUrlAdmin = window.location.pathname.includes('/admin/signup');
+  const isUrlEmployee = window.location.pathname.includes('/employee/signup');
+  const isUrlDeveloper = window.location.pathname.includes('/developer/signup');
+
   const [form, setForm] = useState({
     name: '',
     email: '',
     mobile: '',
-    category: '', // 'admin' or 'employee'
+    category: isUrlAdmin ? 'admin' : (isUrlEmployee ? 'employee' : ''), // 'admin' or 'employee'
     department: '',
     password: '',
     confirmPassword: '',
@@ -25,6 +29,19 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState('');
+  const [adminCountData, setAdminCountData] = useState({ count: 0, limit: 3, canCreate: true });
+
+  useEffect(() => {
+    const fetchAdminCount = async () => {
+      try {
+        const { data } = await authAPI.getAdminCount();
+        setAdminCountData(data);
+      } catch (err) {
+        console.error('Failed to load admin count:', err);
+      }
+    };
+    fetchAdminCount();
+  }, []);
 
   useEffect(() => {
     if (form.category === 'employee') {
@@ -94,6 +111,29 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
+  if (isUrlDeveloper) {
+    return (
+      <div className="min-h-screen bg-dark-950 flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="w-full max-w-md bg-dark-900 border border-white/5 rounded-3xl p-8 text-center shadow-2xl backdrop-blur-md relative z-10">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Registration Restricted</h2>
+          <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+            Super Admin (Developer) registration is restricted for security. Please sign in or contact the system administrator.
+          </p>
+          <Link
+            to="/developer/login"
+            className="w-full inline-flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-colors"
+          >
+            <span>Go to Developer Login</span>
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (pendingVerification) {
     return (
@@ -235,10 +275,11 @@ export default function SignupPage() {
                 <Users className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <select
                   required
-                  className="input text-white"
+                  className="input text-white disabled:opacity-75 disabled:cursor-not-allowed"
                   style={{ paddingLeft: '2.5rem' }}
                   value={form.category}
                   onChange={e => setForm({ ...form, category: e.target.value })}
+                  disabled={isUrlAdmin || isUrlEmployee}
                 >
                   <option value="" className="text-slate-800">Select Category</option>
                   <option value="admin" className="text-slate-800">Admin</option>
@@ -246,6 +287,16 @@ export default function SignupPage() {
                 </select>
               </div>
             </div>
+
+            {form.category === 'admin' && adminCountData.count >= 3 && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex gap-2 items-start leading-relaxed my-3 animate-fade-in">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-white">Admin Account Limit Reached</p>
+                  <p className="mt-0.5">Maximum limit of 3 Admin accounts has been reached. You cannot create a new Admin account at this time.</p>
+                </div>
+              </div>
+            )}
 
             {form.category === 'employee' && (
               <div>
@@ -312,20 +363,26 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-lg active:scale-98 flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Creating profile...
-                </>
-              ) : (
-                'Create Profile'
-              )}
-            </button>
+            {!(form.category === 'admin' && adminCountData.count >= 3) ? (
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-lg active:scale-98 flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Creating profile...
+                  </>
+                ) : (
+                  'Create Profile'
+                )}
+              </button>
+            ) : (
+              <div className="text-center text-xs font-semibold text-red-400 mt-4 p-3.5 bg-red-500/5 rounded-xl border border-red-500/10">
+                Signup is disabled due to admin limit (3/3).
+              </div>
+            )}
           </form>
 
           <p className="text-center text-xs text-slate-500 mt-6">

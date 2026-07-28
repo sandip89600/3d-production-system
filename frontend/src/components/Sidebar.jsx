@@ -39,6 +39,7 @@ const employeeNav = [
   { label: 'Available Projects', icon: Boxes, path: '/employee/available' },
   { label: 'My Projects', icon: ListTodo, path: '/employee/my-projects' },
   { label: 'Notifications', icon: Bell, path: '/employee/notifications' },
+  { label: 'My Profile', icon: User, path: '/employee/profile' },
 ];
 
 const clientNav = [

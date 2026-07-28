@@ -5,12 +5,13 @@ const {
   setup2FA, verify2FA, disable2FA,
   changePassword,
   forgotPasswordEmail, forgotPasswordMobile, verifyOTP, resetPassword,
-  verifyEmail, googleLogin, googleSignup
+  verifyEmail, googleLogin, googleSignup, getAdminCount
 } = require('../controllers/authController');
 const { updateProfile } = require('../controllers/profileController');
 const { authenticateJWT } = require('../middleware/auth');
 const { loginLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
+router.get('/admin-count', getAdminCount);
 router.post('/login', loginLimiter, login);
 router.post('/register', register);
 router.post('/signup', register); // Alias register as signup for frontend consistency
