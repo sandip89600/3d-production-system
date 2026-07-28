@@ -23,7 +23,7 @@ export default function AdminDashboard() {
   return (
     <Layout title="Admin Dashboard" subtitle="Monitor your projects and team activity">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Total Uploaded" value={stats.uploaded} icon={Upload} color="blue" />
         <StatsCard title="Active" value={stats.active} icon={FolderKanban} color="purple" />
         <StatsCard title="Completed" value={stats.completed} icon={CheckCircle2} color="emerald" />
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Client Scope Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatsCard title="Total Clients" value={data?.clientStats?.totalClients} icon={Users} color="cyan" />
         <StatsCard title="Active Clients" value={data?.clientStats?.activeClients} icon={CheckCircle2} color="indigo" />
         <StatsCard title="Client Uploads" value={data?.clientStats?.clientUploadCount} icon={Upload} color="amber" />

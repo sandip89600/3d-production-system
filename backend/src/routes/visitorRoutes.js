@@ -7,7 +7,10 @@ const {
   getLiveAnalytics,
   getLiveVisitorsList,
   getHistoricalCharts,
-  exportAnalyticsReport
+  exportAnalyticsReport,
+  getWebhookConfig,
+  saveWebhookConfig,
+  testWebhook
 } = require('../controllers/visitorController');
 const { authenticateJWT, requireRole } = require('../middleware/auth');
 
@@ -21,5 +24,8 @@ router.get('/admin/stats', authenticateJWT, requireRole('developer', 'admin'), g
 router.get('/admin/live', authenticateJWT, requireRole('developer', 'admin'), getLiveVisitorsList);
 router.get('/admin/charts', authenticateJWT, requireRole('developer', 'admin'), getHistoricalCharts);
 router.get('/admin/export', authenticateJWT, requireRole('developer', 'admin'), exportAnalyticsReport);
+router.get('/admin/webhook', authenticateJWT, requireRole('developer', 'admin'), getWebhookConfig);
+router.post('/admin/webhook', authenticateJWT, requireRole('developer', 'admin'), saveWebhookConfig);
+router.post('/admin/webhook/test', authenticateJWT, requireRole('developer', 'admin'), testWebhook);
 
 module.exports = router;

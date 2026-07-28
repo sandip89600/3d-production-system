@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  return `${window.location.protocol}//${window.location.hostname}:5000`;
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: `${getApiUrl()}/api`,
   withCredentials: true,
 });
 
@@ -24,7 +29,7 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         const { data } = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/refresh`,
+          `${getApiUrl()}/api/auth/refresh`,
           { refreshToken }
         );
         localStorage.setItem('accessToken', data.accessToken);

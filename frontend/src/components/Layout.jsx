@@ -6,7 +6,7 @@ export default function Layout({ children, title, subtitle }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-dark-950">
+    <div className="flex h-screen overflow-hidden bg-dark-950 w-full">
       {/* Mobile Sidebar Backdrop */}
       {mobileSidebarOpen && (
         <div 
@@ -20,14 +20,14 @@ export default function Layout({ children, title, subtitle }) {
         setMobileSidebarOpen={setMobileSidebarOpen} 
       />
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden w-0">
         <TopBar 
           title={title} 
           subtitle={subtitle} 
           onToggleMobileSidebar={() => setMobileSidebarOpen(o => !o)} 
         />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-[1600px] mx-auto animate-fade-in">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+          <div className="max-w-[1600px] mx-auto animate-fade-in w-full">
             {children}
           </div>
         </main>

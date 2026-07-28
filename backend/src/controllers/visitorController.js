@@ -2,6 +2,7 @@ const VisitorSession = require('../models/VisitorSession');
 const VisitorEvent = require('../models/VisitorEvent');
 const VisitorNotification = require('../models/VisitorNotification');
 const VisitorStatistic = require('../models/VisitorStatistic');
+const VisitorWebhook = require('../models/VisitorWebhook');
 const { logger } = require('../utils/logger');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
@@ -147,6 +148,74 @@ const parseUserAgent = (uaString = '') => {
   return { browser, browserVersion, os, deviceType };
 };
 
+// Webhook notifier helper
+const triggerWebhook = async (sessionData) => {
+  try {
+    const webhook = await VisitorWebhook.findOne();
+    if (!webhook || !webhook.isEnabled || !webhook.url) {
+      return;
+    }
+
+    const payload = {
+      event: 'visitor.visited',
+      timestamp: new Date(),
+      data: {
+        sessionId: sessionData.sessionId,
+        visitorId: sessionData.visitorId,
+        ipAddress: sessionData.ipAddress,
+        country: sessionData.country,
+        state: sessionData.state,
+        city: sessionData.city,
+        timezone: sessionData.timezone,
+        browser: sessionData.browser,
+        os: sessionData.os,
+        deviceType: sessionData.deviceType,
+        referralSource: sessionData.referralSource,
+        landingPage: sessionData.landingPage,
+        visitStart: sessionData.visitStart
+      }
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    let status = 'success';
+    let responseText = '';
+
+    try {
+      const response = await fetch(webhook.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Visitor-Webhook-Event': 'visitor.visited',
+          ...(webhook.secret ? { 'X-Visitor-Webhook-Secret': webhook.secret } : {})
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      responseText = await response.text();
+      if (!response.ok) {
+        status = 'error';
+      }
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      status = 'error';
+      responseText = fetchErr.message;
+    }
+
+    webhook.lastTriggered = new Date();
+    webhook.lastStatus = status;
+    webhook.lastResponse = responseText.substring(0, 500);
+    await webhook.save();
+    
+    logger.info(`🌐 Webhook triggered status: ${status} to URL ${webhook.url}`);
+  } catch (err) {
+    logger.error('Failed to trigger visitor webhook:', err);
+  }
+};
+
 // 1. Session start tracker
 const trackSessionStart = async (req, res) => {
   try {
@@ -234,6 +303,9 @@ const trackSessionStart = async (req, res) => {
       // Update online count
       sendActiveVisitorsCount();
     }
+
+    // Trigger Webhook asynchronously in the background
+    triggerWebhook(session).catch(err => logger.error('Error invoking webhook:', err));
 
     res.status(201).json({ success: true, session });
   } catch (err) {
@@ -675,6 +747,113 @@ const exportAnalyticsReport = async (req, res) => {
   }
 };
 
+// Webhook config getter
+const getWebhookConfig = async (req, res) => {
+  try {
+    let webhook = await VisitorWebhook.findOne();
+    if (!webhook) {
+      webhook = new VisitorWebhook({
+        url: '',
+        isEnabled: false,
+        secret: ''
+      });
+      await webhook.save();
+    }
+    res.json({ success: true, webhook });
+  } catch (err) {
+    logger.error('Error fetching webhook config:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Webhook config saver
+const saveWebhookConfig = async (req, res) => {
+  try {
+    const { url, isEnabled, secret } = req.body;
+    
+    let webhook = await VisitorWebhook.findOne();
+    if (!webhook) {
+      webhook = new VisitorWebhook({ url, isEnabled, secret });
+    } else {
+      webhook.url = url;
+      webhook.isEnabled = isEnabled !== undefined ? isEnabled : webhook.isEnabled;
+      webhook.secret = secret !== undefined ? secret : webhook.secret;
+    }
+
+    await webhook.save();
+    res.json({ success: true, message: 'Webhook configuration saved successfully', webhook });
+  } catch (err) {
+    logger.error('Error saving webhook config:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Webhook test notifier
+const testWebhook = async (req, res) => {
+  try {
+    const { url, secret } = req.body;
+    if (!url) {
+      return res.status(400).json({ success: false, message: 'URL is required' });
+    }
+
+    const payload = {
+      event: 'visitor.test',
+      timestamp: new Date(),
+      data: {
+        sessionId: 'test_session_12345',
+        visitorId: 'test_visitor_67890',
+        ipAddress: '103.51.15.110',
+        country: 'India',
+        state: 'Maharashtra',
+        city: 'Nashik',
+        timezone: 'Asia/Kolkata',
+        browser: 'Chrome',
+        os: 'Windows',
+        deviceType: 'Desktop',
+        referralSource: 'Google',
+        landingPage: '/',
+        visitStart: new Date()
+      }
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    let responseText = '';
+    let success = false;
+    let statusCode = null;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Visitor-Webhook-Event': 'visitor.test',
+          ...(secret ? { 'X-Visitor-Webhook-Secret': secret } : {})
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      statusCode = response.status;
+      responseText = await response.text();
+      success = response.ok;
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      responseText = fetchErr.message;
+    }
+
+    res.json({
+      success,
+      statusCode,
+      response: responseText.substring(0, 1000)
+    });
+  } catch (err) {
+    logger.error('Error testing webhook:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   setIO,
   trackSessionStart,
@@ -683,5 +862,8 @@ module.exports = {
   getLiveAnalytics,
   getLiveVisitorsList,
   getHistoricalCharts,
-  exportAnalyticsReport
+  exportAnalyticsReport,
+  getWebhookConfig,
+  saveWebhookConfig,
+  testWebhook
 };

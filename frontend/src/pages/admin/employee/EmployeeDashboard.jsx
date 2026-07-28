@@ -30,7 +30,7 @@ export default function EmployeeDashboard() {
       subtitle="Your project workbench"
     >
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatsCard title="Total Projects" value={stats.total} icon={FolderKanban} color="blue" />
         <StatsCard title="Active" value={stats.active} icon={Activity} color="purple" />
         <StatsCard title="In Review" value={stats.inReview} icon={ClipboardList} color="amber" />

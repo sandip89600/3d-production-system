@@ -166,7 +166,7 @@ export default function TopBar({ title, subtitle, onToggleMobileSidebar }) {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-96 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slide-in-up z-50">
+            <div className="absolute right-0 top-12 w-[calc(100vw-2rem)] max-w-xs sm:max-w-sm md:w-96 bg-dark-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slide-in-up z-50">
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
                 <h3 className="text-white font-semibold text-sm">Notifications</h3>
                 {unreadCount > 0 && (

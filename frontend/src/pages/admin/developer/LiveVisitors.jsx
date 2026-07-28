@@ -2,14 +2,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Activity, Users, MapPin, Clock, Globe, Search, Filter, 
   Download, Eye, ArrowRight, X, Sparkles, RefreshCw,
-  Monitor, Smartphone, Tablet, ExternalLink, Calendar
+  Monitor, Smartphone, Tablet, ExternalLink, Calendar,
+  Link, Shield, Play, CheckCircle, AlertTriangle, Code
 } from 'lucide-react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import StatsCard from '../../../components/StatsCard';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Get API base URL depending on env (with dynamic local hostname fallback for mobile/tablet testing in local network)
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  return `${window.location.protocol}//${window.location.hostname}:5000`;
+};
+const API_URL = getApiUrl();
 
 export default function LiveVisitors() {
   const { user, socket } = useAuth();
@@ -42,6 +48,98 @@ export default function LiveVisitors() {
   
   // Active selected visitor for sidebar flow details
   const [selectedVisitor, setSelectedVisitor] = useState(null);
+
+  // Tab navigation state
+  const [activeTab, setActiveTab] = useState('live'); // 'live' | 'webhook'
+
+  // Webhook settings state variables
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [webhookSecret, setWebhookSecret] = useState('');
+  const [webhookConfigLoading, setWebhookConfigLoading] = useState(false);
+  const [webhookSaving, setWebhookSaving] = useState(false);
+  const [webhookTesting, setWebhookTesting] = useState(false);
+  const [webhookTestResult, setWebhookTestResult] = useState(null);
+
+  const fetchWebhookConfig = async () => {
+    try {
+      setWebhookConfigLoading(true);
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.get(`${API_URL}/api/visitor-analytics/admin/webhook`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success && res.data.webhook) {
+        setWebhookUrl(res.data.webhook.url);
+        setWebhookEnabled(res.data.webhook.isEnabled);
+        setWebhookSecret(res.data.webhook.secret || '');
+      }
+    } catch (err) {
+      console.error('Failed to load webhook configuration:', err);
+    } finally {
+      setWebhookConfigLoading(false);
+    }
+  };
+
+  const handleSaveWebhook = async (e) => {
+    e.preventDefault();
+    try {
+      setWebhookSaving(true);
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.post(`${API_URL}/api/visitor-analytics/admin/webhook`, {
+        url: webhookUrl,
+        isEnabled: webhookEnabled,
+        secret: webhookSecret
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        alert('Webhook configuration saved successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to save webhook config:', err);
+      alert('Error: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setWebhookSaving(false);
+    }
+  };
+
+  const handleTestWebhook = async () => {
+    if (!webhookUrl) {
+      alert('Please enter a Webhook URL first.');
+      return;
+    }
+    try {
+      setWebhookTesting(true);
+      setWebhookTestResult(null);
+      const token = localStorage.getItem('accessToken');
+      const res = await axios.post(`${API_URL}/api/visitor-analytics/admin/webhook/test`, {
+        url: webhookUrl,
+        secret: webhookSecret
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWebhookTestResult({
+        success: res.data.success,
+        statusCode: res.data.statusCode,
+        response: res.data.response
+      });
+    } catch (err) {
+      console.error('Failed to test webhook:', err);
+      setWebhookTestResult({
+        success: false,
+        statusCode: err.response?.status || 'Network Error',
+        response: err.response?.data?.message || err.message
+      });
+    } finally {
+      setWebhookTesting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'webhook') {
+      fetchWebhookConfig();
+    }
+  }, [activeTab]);
 
   // Load visitor statistics & live visitors list
   const fetchStats = async () => {
@@ -274,7 +372,33 @@ export default function LiveVisitors() {
         </div>
       </div>
 
-      {/* Analytics statistics counters (Glassmorphic cards) */}
+      {/* Tab Navigation */}
+      <div className="flex border-b border-slate-800 gap-6 z-10">
+        <button
+          onClick={() => setActiveTab('live')}
+          className={`pb-3 text-sm font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
+            activeTab === 'live' 
+              ? 'text-amber-500 border-amber-500 font-extrabold' 
+              : 'text-slate-400 border-transparent hover:text-slate-200'
+          }`}
+        >
+          Live Monitor
+        </button>
+        <button
+          onClick={() => setActiveTab('webhook')}
+          className={`pb-3 text-sm font-bold uppercase tracking-wider transition-all border-b-2 cursor-pointer ${
+            activeTab === 'webhook' 
+              ? 'text-amber-500 border-amber-500 font-extrabold' 
+              : 'text-slate-400 border-transparent hover:text-slate-200'
+          }`}
+        >
+          Webhook Settings
+        </button>
+      </div>
+
+      {activeTab === 'live' ? (
+        <>
+          {/* Analytics statistics counters (Glassmorphic cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 z-10">
         <div className="glass-card p-6 flex items-center justify-between border border-white/5 shadow-xl">
           <div className="flex flex-col gap-1">
@@ -542,6 +666,197 @@ export default function LiveVisitors() {
           </div>
         )}
       </div>
+        </>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 z-10">
+          {/* Configuration Card */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <div className="glass-card p-6 md:p-8 border border-white/5 shadow-2xl flex flex-col gap-6">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-amber-500" />
+                  <span>Webhook Configuration</span>
+                </h3>
+                <p className="text-slate-400 text-xs mt-1">Configure an HTTP POST target URL to receive real-time visitor alerts instantly.</p>
+              </div>
+
+              {webhookConfigLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+                </div>
+              ) : (
+                <form onSubmit={handleSaveWebhook} className="flex flex-col gap-5">
+                  {/* Enabled switch */}
+                  <div className="flex items-center justify-between bg-slate-900/40 border border-slate-850 p-4.5 rounded-xl">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-xs font-bold text-white">Enable Webhook</span>
+                      <span className="text-[10px] text-slate-500">Deliver POST payloads when visits start.</span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={webhookEnabled}
+                        onChange={(e) => setWebhookEnabled(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 peer-checked:after:bg-white" />
+                    </label>
+                  </div>
+
+                  {/* Webhook target URL */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Link className="w-4 h-4 text-slate-400" />
+                      <span>Target Payload Destination URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      placeholder="https://api.yourservice.com/v1/webhooks/visitors"
+                      value={webhookUrl}
+                      onChange={(e) => setWebhookUrl(e.target.value)}
+                      className="bg-slate-900/60 border border-slate-850 focus:border-amber-500/50 outline-none text-slate-100 rounded-xl px-4 py-3 text-xs font-medium w-full transition-all"
+                    />
+                  </div>
+
+                  {/* Signature secret key */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Shield className="w-4 h-4 text-slate-400" />
+                      <span>Signature Signing Secret Key (Optional)</span>
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="e.g. whsec_your_secret_signing_key"
+                      value={webhookSecret}
+                      onChange={(e) => setWebhookSecret(e.target.value)}
+                      className="bg-slate-900/60 border border-slate-850 focus:border-amber-500/50 outline-none text-slate-100 rounded-xl px-4 py-3 text-xs font-medium w-full transition-all"
+                    />
+                    <span className="text-[10px] text-slate-500 leading-normal">
+                      Sent in the `X-Visitor-Webhook-Secret` header to let your application authenticate the payload sender.
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      type="submit"
+                      disabled={webhookSaving}
+                      className="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 disabled:opacity-50 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-amber-500/10 cursor-pointer"
+                    >
+                      {webhookSaving ? 'Saving Config...' : 'Save Configuration'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTestWebhook}
+                      disabled={webhookTesting || !webhookUrl}
+                      className="flex items-center justify-center gap-2 border border-slate-800 bg-slate-900/60 hover:bg-slate-850 hover:border-slate-700 disabled:opacity-50 text-slate-200 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      <span>{webhookTesting ? 'Testing...' : 'Test URL'}</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Test result status panel */}
+            {webhookTestResult && (
+              <div className="glass-card p-6 border border-white/5 shadow-xl flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-slate-850 pb-3">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <span>Test Event Response Details</span>
+                  </h4>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                    webhookTestResult.success 
+                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                      : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  }`}>
+                    {webhookTestResult.success ? (
+                      <>
+                        <CheckCircle className="w-3 h-3" />
+                        <span>Success</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>Failed</span>
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-900">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">HTTP Status Code</p>
+                    <p className="text-white font-mono mt-1 font-bold">{webhookTestResult.statusCode}</p>
+                  </div>
+                  <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-900">
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">Response Format</p>
+                    <p className="text-white font-mono mt-1">Plaintext / JSON</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[10px] text-slate-500 font-bold uppercase">Response Payload</p>
+                  <pre className="bg-slate-950 p-4 rounded-xl border border-slate-900 text-[10px] font-mono text-slate-300 overflow-x-auto break-all whitespace-pre-wrap max-h-[250px]">
+                    {webhookTestResult.response || '[Empty Response Body]'}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Guide Card */}
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <div className="glass-card p-6 md:p-8 border border-white/5 shadow-2xl flex flex-col gap-5">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
+                  <Code className="w-4 h-4 text-amber-500" />
+                  <span>Payload Schema</span>
+                </h3>
+                <p className="text-slate-400 text-[10px] mt-1 leading-normal">
+                  Your server receives this JSON structure via HTTP `POST` when a visitor lands on any page.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] text-slate-400 font-bold uppercase">JSON Schema Blueprint</span>
+                <pre className="bg-slate-950 p-4 rounded-xl border border-slate-900 text-[9px] font-mono text-slate-300 overflow-x-auto leading-relaxed select-all">
+{`{
+  "event": "visitor.visited",
+  "timestamp": "2026-07-27T14:15:36Z",
+  "data": {
+    "sessionId": "sess_1a2b3c4d",
+    "visitorId": "vis_9x8y7z6w",
+    "ipAddress": "103.51.15.110",
+    "country": "India",
+    "state": "Maharashtra",
+    "city": "Nashik",
+    "timezone": "Asia/Kolkata",
+    "browser": "Chrome",
+    "os": "Windows",
+    "deviceType": "Desktop",
+    "referralSource": "Direct",
+    "landingPage": "/",
+    "visitStart": "2026-07-27T14:15:36Z"
+  }
+}`}
+                </pre>
+              </div>
+
+              <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 flex flex-col gap-2">
+                <span className="text-[10px] font-bold text-amber-500 uppercase flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Security Recommendations</span>
+                </span>
+                <p className="text-[10px] text-slate-400 leading-normal">
+                  Verify the signature using the `X-Visitor-Webhook-Secret` token header parameter on your server endpoint to ensure authenticity.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Visitor Timeline Side Drawer Modal */}
       {selectedVisitor && (

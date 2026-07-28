@@ -12,7 +12,10 @@ export const AuthProvider = ({ children }) => {
   const queryClient = useQueryClient();
 
   const connectSocket = useCallback((userId, role) => {
-    const s = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 
+                      import.meta.env.VITE_API_URL || 
+                      `${window.location.protocol}//${window.location.hostname}:5000`;
+    const s = io(socketUrl, {
       auth: { userId, role },
       transports: ['websocket'],
     });

@@ -2,8 +2,12 @@ import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
-// Get API base URL depending on env
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Get API base URL depending on env (with dynamic local hostname fallback for mobile/tablet testing in local network)
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  return `${window.location.protocol}//${window.location.hostname}:5000`;
+};
+const API_URL = getApiUrl();
 
 const VisitorTrackerContext = createContext(null);
 

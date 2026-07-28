@@ -36,10 +36,10 @@ export default function StatsCard({ title, value, icon: Icon, color = 'blue', tr
   };
 
   return (
-    <div className="glass-card p-6 hover:bg-white/8 transition-all duration-300 group">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 rounded-xl ${bgColorMap[color]} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-          {Icon && <Icon className={`w-6 h-6 ${textColorMap[color]}`} />}
+    <div className="glass-card p-4 lg:p-6 hover:bg-white/8 transition-all duration-300 group">
+      <div className="flex items-start justify-between mb-3 lg:mb-4">
+        <div className={`w-9 h-9 lg:w-12 lg:h-12 rounded-xl ${bgColorMap[color]} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          {Icon && <Icon className={`w-4 h-4 lg:w-6 lg:h-6 ${textColorMap[color]}`} />}
         </div>
         {trend !== undefined && (
           <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg ${
@@ -53,8 +53,8 @@ export default function StatsCard({ title, value, icon: Icon, color = 'blue', tr
         )}
       </div>
       <div>
-        <p className="text-3xl font-bold text-white mb-1 animate-count-up">{value ?? '—'}</p>
-        <p className="text-slate-400 text-sm font-medium">{title}</p>
+        <p className="text-xl lg:text-3xl font-bold text-white mb-0.5 lg:mb-1 animate-count-up truncate">{value ?? '—'}</p>
+        <p className="text-slate-400 text-xs lg:text-sm font-medium leading-tight">{title}</p>
         {subtitle && <p className="text-slate-500 text-xs mt-1">{subtitle}</p>}
         {trendLabel && <p className="text-slate-500 text-xs mt-1">{trendLabel}</p>}
       </div>

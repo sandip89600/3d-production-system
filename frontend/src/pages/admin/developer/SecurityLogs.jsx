@@ -54,7 +54,7 @@ export default function SecurityLogs() {
   return (
     <Layout title="Security & Audit Logs" subtitle="Monitor all system activity and security events">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Events', value: data?.total || 0, icon: Activity, color: 'text-blue-400 bg-blue-500/10' },
           { label: 'Login Events', value: logs.filter(l => l.action === 'login').length, icon: CheckCircle, color: 'text-emerald-400 bg-emerald-500/10' },

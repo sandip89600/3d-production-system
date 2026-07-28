@@ -74,13 +74,13 @@ export default function DeveloperDashboard() {
   return (
     <Layout title="Developer Dashboard" subtitle="Complete system overview & analytics">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatsCard title="Total Projects" value={overview.totalProjects} icon={FolderKanban} color="blue" />
         <StatsCard title="Active Projects" value={overview.activeProjects} icon={Activity} color="purple" />
         <StatsCard title="Completed" value={overview.completedProjects} icon={CheckCircle2} color="emerald" />
         <StatsCard title="Delayed" value={overview.delayedProjects} icon={AlertTriangle} color="red" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <StatsCard title="Registered Users" value={overview.totalRegisteredUsers || overview.totalUsers} icon={Users} color="cyan" />
         <StatsCard title="Active Users" value={overview.activeUsers} icon={CheckCircle2} color="indigo" />
         <StatsCard title="Online Users" value={overview.onlineUsers} icon={Activity} color="emerald" />
@@ -89,7 +89,7 @@ export default function DeveloperDashboard() {
       </div>
       
       {/* WhatsApp & Download Workflow Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <StatsCard title="WhatsApp Delivered" value={`${overview.whatsappDeliveredCount || 0} / ${overview.whatsappSentCount || 0}`} icon={MessageSquare} color="emerald" />
         <StatsCard title="Download Success" value={`${overview.downloadSuccessRate || 0}%`} icon={Download} color="blue" />
         <StatsCard title="Pending Downloads" value={overview.pendingDownloadsCount || 0} icon={AlertCircle} color="amber" />
